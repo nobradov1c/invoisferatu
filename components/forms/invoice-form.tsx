@@ -1,15 +1,15 @@
 "use client";
 
+import { Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
-import { Plus, Trash2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
 import { generateInvoicePDF } from "../../app/lib/pdf-generator";
 
 interface InvoiceItem {
@@ -79,6 +79,7 @@ export default function InvoiceForm() {
   const total = subtotal + taxAmount;
 
   const validateForm = (data: InvoiceFormData) => {
+    // biome-ignore lint/suspicious/noExplicitAny: reason
     const errors: any = {};
 
     // Required field validation
@@ -133,6 +134,7 @@ export default function InvoiceForm() {
       // Set errors manually since we're not using schema validation
       Object.keys(validationErrors).forEach((key) => {
         if (key === "items" && Array.isArray(validationErrors.items)) {
+          // biome-ignore lint/suspicious/noExplicitAny: reason
           validationErrors.items.forEach((itemErrors: any, index: number) => {
             if (itemErrors.description) {
               setError(`items.${index}.description`, {
@@ -149,6 +151,7 @@ export default function InvoiceForm() {
             }
           });
         } else {
+          // biome-ignore lint/suspicious/noExplicitAny: reason
           setError(key as any, { message: validationErrors[key] });
         }
       });
@@ -186,7 +189,7 @@ export default function InvoiceForm() {
                 {...register("companyName")}
               />
               {errors.companyName && (
-                <p className="text-sm text-destructive">
+                <p className="text-destructive text-sm">
                   {errors.companyName.message}
                 </p>
               )}
@@ -201,7 +204,7 @@ export default function InvoiceForm() {
                 {...register("companyAddress")}
               />
               {errors.companyAddress && (
-                <p className="text-sm text-destructive">
+                <p className="text-destructive text-sm">
                   {errors.companyAddress.message}
                 </p>
               )}
@@ -223,7 +226,7 @@ export default function InvoiceForm() {
                 {...register("invoiceNumber")}
               />
               {errors.invoiceNumber && (
-                <p className="text-sm text-destructive">
+                <p className="text-destructive text-sm">
                   {errors.invoiceNumber.message}
                 </p>
               )}
@@ -237,7 +240,7 @@ export default function InvoiceForm() {
                 {...register("invoiceDate")}
               />
               {errors.invoiceDate && (
-                <p className="text-sm text-destructive">
+                <p className="text-destructive text-sm">
                   {errors.invoiceDate.message}
                 </p>
               )}
@@ -276,7 +279,7 @@ export default function InvoiceForm() {
                 {...register("clientName")}
               />
               {errors.clientName && (
-                <p className="text-sm text-destructive">
+                <p className="text-destructive text-sm">
                   {errors.clientName.message}
                 </p>
               )}
@@ -291,7 +294,7 @@ export default function InvoiceForm() {
                 {...register("clientAddress")}
               />
               {errors.clientAddress && (
-                <p className="text-sm text-destructive">
+                <p className="text-destructive text-sm">
                   {errors.clientAddress.message}
                 </p>
               )}
@@ -308,7 +311,7 @@ export default function InvoiceForm() {
             <div className="space-y-4">
               <div className="overflow-x-auto">
                 <div className="min-w-[600px]">
-                  <div className="grid grid-cols-12 gap-2 mb-2 text-sm font-medium text-muted-foreground">
+                  <div className="mb-2 grid grid-cols-12 gap-2 font-medium text-muted-foreground text-sm">
                     <div className="col-span-1">#</div>
                     <div className="col-span-5">Description *</div>
                     <div className="col-span-2">Quantity *</div>
@@ -326,7 +329,7 @@ export default function InvoiceForm() {
                     return (
                       <div
                         key={field.id}
-                        className="grid grid-cols-12 gap-2 mb-4 items-start"
+                        className="mb-4 grid grid-cols-12 items-start gap-2"
                       >
                         <div className="col-span-1 pt-2">
                           <Badge variant="outline" className="text-xs">
@@ -341,7 +344,7 @@ export default function InvoiceForm() {
                             {...register(`items.${index}.description`)}
                           />
                           {errors.items?.[index]?.description && (
-                            <p className="text-xs text-destructive">
+                            <p className="text-destructive text-xs">
                               {errors.items[index]?.description?.message}
                             </p>
                           )}
@@ -358,7 +361,7 @@ export default function InvoiceForm() {
                             })}
                           />
                           {errors.items?.[index]?.quantity && (
-                            <p className="text-xs text-destructive">
+                            <p className="text-destructive text-xs">
                               {errors.items[index]?.quantity?.message}
                             </p>
                           )}
@@ -375,7 +378,7 @@ export default function InvoiceForm() {
                             })}
                           />
                           {errors.items?.[index]?.rate && (
-                            <p className="text-xs text-destructive">
+                            <p className="text-destructive text-xs">
                               {errors.items[index]?.rate?.message}
                             </p>
                           )}
@@ -419,7 +422,7 @@ export default function InvoiceForm() {
               </Button>
 
               {errors.items && (
-                <p className="text-sm text-destructive">
+                <p className="text-destructive text-sm">
                   {errors.items.message}
                 </p>
               )}
@@ -447,7 +450,7 @@ export default function InvoiceForm() {
                 })}
               />
               {errors.taxRate && (
-                <p className="text-sm text-destructive">
+                <p className="text-destructive text-sm">
                   {errors.taxRate.message}
                 </p>
               )}
@@ -463,7 +466,7 @@ export default function InvoiceForm() {
                 <span className="font-medium">${taxAmount.toFixed(2)}</span>
               </div>
               <Separator />
-              <div className="flex justify-between text-lg font-semibold">
+              <div className="flex justify-between font-semibold text-lg">
                 <span>Total:</span>
                 <span>${total.toFixed(2)}</span>
               </div>
