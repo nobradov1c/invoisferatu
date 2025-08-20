@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 /*---break---*/
+/*biome-ignore lint: wip tailwind support*/
 @custom-variant dark (&:is(.dark *));
 
 /*biome-ignore lint: WIP fix: https://github.com/biomejs/biome/pull/7164*/
@@ -115,9 +116,11 @@
 /*---break---*/
 @layer base {
   * {
+    /*biome-ignore lint: wip tailwind support*/
     @apply border-border outline-ring/50;
   }
   body {
+    /*biome-ignore lint: wip tailwind support*/
     @apply bg-background text-foreground;
   }
 }

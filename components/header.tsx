@@ -13,7 +13,9 @@ export function Header() {
           </div>
           <div>
             <h1 className="text-xl font-bold">Invoisferatu</h1>
-            <p className="text-xs text-muted-foreground">Professional Invoice Generator</p>
+            <p className="text-xs text-muted-foreground">
+              Professional Invoice Generator
+            </p>
           </div>
         </div>
         <ThemeToggle />

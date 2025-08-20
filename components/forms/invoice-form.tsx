@@ -41,8 +41,10 @@ export default function InvoiceForm() {
     control,
     handleSubmit,
     watch,
+    setError,
     formState: { errors },
   } = useForm<InvoiceFormData>({
+    mode: "onBlur", // Enable validation on blur for better UX
     defaultValues: {
       companyName: "",
       companyAddress: "",
@@ -76,7 +78,83 @@ export default function InvoiceForm() {
   const taxAmount = subtotal * (watchedTaxRate / 100);
   const total = subtotal + taxAmount;
 
+  const validateForm = (data: InvoiceFormData) => {
+    const errors: any = {};
+
+    // Required field validation
+    if (!data.companyName?.trim())
+      errors.companyName = "Company name is required";
+    if (!data.companyAddress?.trim())
+      errors.companyAddress = "Company address is required";
+    if (!data.invoiceNumber?.trim())
+      errors.invoiceNumber = "Invoice number is required";
+    if (!data.invoiceDate?.trim())
+      errors.invoiceDate = "Invoice date is required";
+    if (!data.clientName?.trim()) errors.clientName = "Client name is required";
+    if (!data.clientAddress?.trim())
+      errors.clientAddress = "Client address is required";
+
+    // Items validation
+    if (!data.items || data.items.length === 0) {
+      errors.items = "At least one item is required";
+    } else {
+      data.items.forEach((item, index) => {
+        if (!item.description?.trim()) {
+          if (!errors.items) errors.items = [];
+          if (!errors.items[index]) errors.items[index] = {};
+          errors.items[index].description = "Item description is required";
+        }
+        if (!item.quantity || item.quantity <= 0) {
+          if (!errors.items) errors.items = [];
+          if (!errors.items[index]) errors.items[index] = {};
+          errors.items[index].quantity = "Quantity must be greater than 0";
+        }
+        if (!item.rate || item.rate <= 0) {
+          if (!errors.items) errors.items = [];
+          if (!errors.items[index]) errors.items[index] = {};
+          errors.items[index].rate = "Rate must be greater than 0";
+        }
+      });
+    }
+
+    // Tax rate validation
+    if (data.taxRate < 0 || data.taxRate > 100) {
+      errors.taxRate = "Tax rate must be between 0 and 100";
+    }
+
+    return errors;
+  };
+
   const onSubmit = async (data: InvoiceFormData) => {
+    const validationErrors = validateForm(data);
+    const hasErrors = Object.keys(validationErrors).length > 0;
+
+    if (hasErrors) {
+      // Set errors manually since we're not using schema validation
+      Object.keys(validationErrors).forEach((key) => {
+        if (key === "items" && Array.isArray(validationErrors.items)) {
+          validationErrors.items.forEach((itemErrors: any, index: number) => {
+            if (itemErrors.description) {
+              setError(`items.${index}.description`, {
+                message: itemErrors.description,
+              });
+            }
+            if (itemErrors.quantity) {
+              setError(`items.${index}.quantity`, {
+                message: itemErrors.quantity,
+              });
+            }
+            if (itemErrors.rate) {
+              setError(`items.${index}.rate`, { message: itemErrors.rate });
+            }
+          });
+        } else {
+          setError(key as any, { message: validationErrors[key] });
+        }
+      });
+      return;
+    }
+
     setIsGenerating(true);
     try {
       generateInvoicePDF(data);
@@ -107,6 +185,11 @@ export default function InvoiceForm() {
                 placeholder="Your Company Name"
                 {...register("companyName")}
               />
+              {errors.companyName && (
+                <p className="text-sm text-destructive">
+                  {errors.companyName.message}
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -117,6 +200,11 @@ export default function InvoiceForm() {
                 rows={3}
                 {...register("companyAddress")}
               />
+              {errors.companyAddress && (
+                <p className="text-sm text-destructive">
+                  {errors.companyAddress.message}
+                </p>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -134,6 +222,11 @@ export default function InvoiceForm() {
                 placeholder="INV-000001"
                 {...register("invoiceNumber")}
               />
+              {errors.invoiceNumber && (
+                <p className="text-sm text-destructive">
+                  {errors.invoiceNumber.message}
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -143,6 +236,11 @@ export default function InvoiceForm() {
                 type="date"
                 {...register("invoiceDate")}
               />
+              {errors.invoiceDate && (
+                <p className="text-sm text-destructive">
+                  {errors.invoiceDate.message}
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -177,6 +275,11 @@ export default function InvoiceForm() {
                 placeholder="Client Name"
                 {...register("clientName")}
               />
+              {errors.clientName && (
+                <p className="text-sm text-destructive">
+                  {errors.clientName.message}
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -187,6 +290,11 @@ export default function InvoiceForm() {
                 rows={3}
                 {...register("clientAddress")}
               />
+              {errors.clientAddress && (
+                <p className="text-sm text-destructive">
+                  {errors.clientAddress.message}
+                </p>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -232,6 +340,11 @@ export default function InvoiceForm() {
                             rows={2}
                             {...register(`items.${index}.description`)}
                           />
+                          {errors.items?.[index]?.description && (
+                            <p className="text-xs text-destructive">
+                              {errors.items[index]?.description?.message}
+                            </p>
+                          )}
                         </div>
 
                         <div className="col-span-2 space-y-1">
@@ -244,6 +357,11 @@ export default function InvoiceForm() {
                               valueAsNumber: true,
                             })}
                           />
+                          {errors.items?.[index]?.quantity && (
+                            <p className="text-xs text-destructive">
+                              {errors.items[index]?.quantity?.message}
+                            </p>
+                          )}
                         </div>
 
                         <div className="col-span-2 space-y-1">
@@ -256,6 +374,11 @@ export default function InvoiceForm() {
                               valueAsNumber: true,
                             })}
                           />
+                          {errors.items?.[index]?.rate && (
+                            <p className="text-xs text-destructive">
+                              {errors.items[index]?.rate?.message}
+                            </p>
+                          )}
                         </div>
 
                         <div className="col-span-1 pt-2">
@@ -294,6 +417,12 @@ export default function InvoiceForm() {
                 <Plus className="mr-2 h-4 w-4" />
                 Add Item
               </Button>
+
+              {errors.items && (
+                <p className="text-sm text-destructive">
+                  {errors.items.message}
+                </p>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -317,6 +446,11 @@ export default function InvoiceForm() {
                   valueAsNumber: true,
                 })}
               />
+              {errors.taxRate && (
+                <p className="text-sm text-destructive">
+                  {errors.taxRate.message}
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
