@@ -9,10 +9,10 @@ export function generateInvoicePDF(data: InvoiceFormData): void {
 
   // Company Information (Top Left)
   doc.setFontSize(12);
-  doc.setFont("helvetica", "bold");
+  doc.setFont("inter", "bold");
   doc.text(data.naziv, 20, 30);
 
-  doc.setFont("helvetica", "normal");
+  doc.setFont("inter", "normal");
   doc.setFontSize(10);
   const companyAddressLines = data.adresa.split("\n");
   let yPosition = 40;
@@ -33,7 +33,7 @@ export function generateInvoicePDF(data: InvoiceFormData): void {
   // Invoice Title and Number (Top Right)
   doc.setFontSize(20);
   doc.setFont("helvetica", "bold");
-  doc.text("INVOICE", 150, 30);
+  doc.text("FAKTURA", 150, 30);
 
   doc.setFontSize(12);
   doc.text(`# ${data.brojFakture}`, 150, 45);

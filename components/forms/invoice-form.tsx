@@ -10,17 +10,27 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  CompanyTemplateSelector,
+  ClientTemplateSelector,
+} from "../template-selector";
 import type { InvoiceFormData } from "../../app/lib/invoice-schema";
 import { generateInvoicePDF } from "../../app/lib/pdf-generator";
+import type { CompanyTemplate, ClientTemplate } from "../../app/lib/storage";
 
 export default function InvoiceForm() {
   const [isGenerating, setIsGenerating] = useState(false);
+  const [selectedCompanyTemplate, setSelectedCompanyTemplate] =
+    useState<CompanyTemplate | null>(null);
+  const [selectedClientTemplate, setSelectedClientTemplate] =
+    useState<ClientTemplate | null>(null);
 
   const {
     register,
     control,
     handleSubmit,
     watch,
+    setValue,
     setError,
     formState: { errors },
   } = useForm<InvoiceFormData>({
@@ -141,6 +151,43 @@ export default function InvoiceForm() {
     }
   };
 
+  const handleCompanyTemplateSelect = (template: CompanyTemplate | null) => {
+    setSelectedCompanyTemplate(template);
+    if (template) {
+      setValue("naziv", template.naziv);
+      setValue("adresa", template.adresa);
+      setValue("pib", template.pib);
+      setValue("maticniBroj", template.maticniBroj);
+      setValue("kontaktEmail", template.kontaktEmail);
+      setValue("tekuciRacun", template.tekuciRacun);
+    }
+  };
+
+  const handleClientTemplateSelect = (template: ClientTemplate | null) => {
+    setSelectedClientTemplate(template);
+    if (template) {
+      setValue("clientNaziv", template.clientNaziv);
+      setValue("clientAdresa", template.clientAdresa);
+      setValue("clientPib", template.clientPib);
+      setValue("clientMaticniBroj", template.clientMaticniBroj);
+    }
+  };
+
+  const currentCompanyData = watch([
+    "naziv",
+    "adresa",
+    "pib",
+    "maticniBroj",
+    "kontaktEmail",
+    "tekuciRacun",
+  ]);
+  const currentClientData = watch([
+    "clientNaziv",
+    "clientAdresa",
+    "clientPib",
+    "clientMaticniBroj",
+  ]);
+
   return (
     <div className="mx-auto max-w-4xl p-6">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
@@ -150,6 +197,20 @@ export default function InvoiceForm() {
             <CardTitle className="flex items-center gap-2">
               Podaci o kompaniji
             </CardTitle>
+            <div className="mt-4">
+              <CompanyTemplateSelector
+                value={selectedCompanyTemplate}
+                onSelect={handleCompanyTemplateSelect}
+                currentData={{
+                  naziv: currentCompanyData[0] || "",
+                  adresa: currentCompanyData[1] || "",
+                  pib: currentCompanyData[2] || "",
+                  maticniBroj: currentCompanyData[3] || "",
+                  kontaktEmail: currentCompanyData[4] || "",
+                  tekuciRacun: currentCompanyData[5] || "",
+                }}
+              />
+            </div>
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
@@ -274,6 +335,18 @@ export default function InvoiceForm() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">Račun za</CardTitle>
+            <div className="mt-4">
+              <ClientTemplateSelector
+                value={selectedClientTemplate}
+                onSelect={handleClientTemplateSelect}
+                currentData={{
+                  clientNaziv: currentClientData[0] || "",
+                  clientAdresa: currentClientData[1] || "",
+                  clientPib: currentClientData[2] || "",
+                  clientMaticniBroj: currentClientData[3] || "",
+                }}
+              />
+            </div>
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
