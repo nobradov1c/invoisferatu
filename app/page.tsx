@@ -1,9 +1,9 @@
+import InvoiceForm from "./components/InvoiceForm";
+
 export default function Home() {
   return (
-    <div className="">
-      <main className="">
-        <h1>Invoisferatu - invoice generation thingy</h1>
-      </main>
+    <div className="min-h-screen bg-gray-100 py-8">
+      <InvoiceForm />
     </div>
   );
 }
