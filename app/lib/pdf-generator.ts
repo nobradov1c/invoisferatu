@@ -10,16 +10,23 @@ export function generateInvoicePDF(data: InvoiceFormData): void {
   // Company Information (Top Left)
   doc.setFontSize(12);
   doc.setFont("helvetica", "bold");
-  doc.text(data.companyName, 20, 30);
+  doc.text(data.naziv, 20, 30);
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
-  const companyAddressLines = data.companyAddress.split("\n");
+  const companyAddressLines = data.adresa.split("\n");
   let yPosition = 40;
   companyAddressLines.forEach((line) => {
     doc.text(line, 20, yPosition);
     yPosition += 5;
   });
+
+  // Add PIB, Matični broj, and email
+  doc.text(`PIB: ${data.pib}`, 20, yPosition);
+  yPosition += 5;
+  doc.text(`Matični broj: ${data.maticniBroj}`, 20, yPosition);
+  yPosition += 5;
+  doc.text(`Email: ${data.kontaktEmail}`, 20, yPosition);
 
   // Invoice Title and Number (Top Right)
   doc.setFontSize(20);
@@ -35,19 +42,25 @@ export function generateInvoicePDF(data: InvoiceFormData): void {
   doc.text(`Terms: ${data.terms}`, 150, 70);
 
   // Bill To Section
-  yPosition = 80;
+  yPosition = 95;
   doc.setFont("helvetica", "bold");
-  doc.text("Bill To", 20, yPosition);
+  doc.text("Račun za", 20, yPosition);
 
   doc.setFont("helvetica", "normal");
   yPosition += 10;
-  doc.text(data.clientName, 20, yPosition);
+  doc.text(data.clientNaziv, 20, yPosition);
 
-  const clientAddressLines = data.clientAddress.split("\n");
+  const clientAddressLines = data.clientAdresa.split("\n");
   clientAddressLines.forEach((line) => {
     yPosition += 5;
     doc.text(line, 20, yPosition);
   });
+
+  // Add client PIB and Matični broj
+  yPosition += 5;
+  doc.text(`PIB: ${data.clientPib}`, 20, yPosition);
+  yPosition += 5;
+  doc.text(`Matični broj: ${data.clientMaticniBroj}`, 20, yPosition);
 
   // Calculate totals
   const subtotal = data.items.reduce(
@@ -69,7 +82,7 @@ export function generateInvoicePDF(data: InvoiceFormData): void {
   );
 
   // Items Table
-  yPosition = 120;
+  yPosition = 135;
 
   // Table Headers
   doc.setFont("helvetica", "bold");

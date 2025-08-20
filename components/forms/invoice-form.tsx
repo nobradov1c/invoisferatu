@@ -10,28 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
+import type { InvoiceFormData } from "../../app/lib/invoice-schema";
 import { generateInvoicePDF } from "../../app/lib/pdf-generator";
-
-interface InvoiceItem {
-  description: string;
-  quantity: number;
-  rate: number;
-}
-
-interface InvoiceFormData {
-  companyName: string;
-  companyAddress: string;
-  invoiceNumber: string;
-  invoiceDate: string;
-  dueDate?: string;
-  terms: string;
-  clientName: string;
-  clientAddress: string;
-  items: InvoiceItem[];
-  taxRate: number;
-  notes?: string;
-  termsAndConditions?: string;
-}
 
 export default function InvoiceForm() {
   const [isGenerating, setIsGenerating] = useState(false);
@@ -46,14 +26,19 @@ export default function InvoiceForm() {
   } = useForm<InvoiceFormData>({
     mode: "onBlur", // Enable validation on blur for better UX
     defaultValues: {
-      companyName: "",
-      companyAddress: "",
-      invoiceNumber: `INV-${String(Date.now()).slice(-6)}`,
+      naziv: "",
+      adresa: "",
+      pib: "",
+      maticniBroj: "",
+      kontaktEmail: "",
+      invoiceNumber: new Date().toISOString().split("T")[0].replace(/-/g, ""),
       invoiceDate: new Date().toISOString().split("T")[0],
       dueDate: "",
       terms: "Due on Receipt",
-      clientName: "",
-      clientAddress: "",
+      clientNaziv: "",
+      clientAdresa: "",
+      clientPib: "",
+      clientMaticniBroj: "",
       items: [{ description: "", quantity: 1, rate: 0 }],
       taxRate: 0,
       notes: "",
@@ -83,17 +68,21 @@ export default function InvoiceForm() {
     const errors: any = {};
 
     // Required field validation
-    if (!data.companyName?.trim())
-      errors.companyName = "Company name is required";
-    if (!data.companyAddress?.trim())
-      errors.companyAddress = "Company address is required";
+    if (!data.naziv?.trim()) errors.naziv = "Naziv je obavezan";
+    if (!data.adresa?.trim()) errors.adresa = "Adresa je obavezna";
+    if (!data.pib?.trim()) errors.pib = "PIB je obavezan";
+    if (!data.maticniBroj?.trim())
+      errors.maticniBroj = "Matični broj je obavezan";
+    if (!data.kontaktEmail?.trim()) errors.kontaktEmail = "Email je obavezan";
     if (!data.invoiceNumber?.trim())
       errors.invoiceNumber = "Invoice number is required";
     if (!data.invoiceDate?.trim())
       errors.invoiceDate = "Invoice date is required";
-    if (!data.clientName?.trim()) errors.clientName = "Client name is required";
-    if (!data.clientAddress?.trim())
-      errors.clientAddress = "Client address is required";
+    if (!data.clientNaziv?.trim()) errors.clientNaziv = "Naziv je obavezan";
+    if (!data.clientAdresa?.trim()) errors.clientAdresa = "Adresa je obavezna";
+    if (!data.clientPib?.trim()) errors.clientPib = "PIB je obavezan";
+    if (!data.clientMaticniBroj?.trim())
+      errors.clientMaticniBroj = "Matični broj je obavezan";
 
     // Items validation
     if (!data.items || data.items.length === 0) {
@@ -176,36 +165,72 @@ export default function InvoiceForm() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              Company Information
-              <Badge variant="secondary">From</Badge>
+              Podaci o kompaniji
             </CardTitle>
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="companyName">Company Name *</Label>
+              <Label htmlFor="naziv">Naziv *</Label>
               <Input
-                id="companyName"
-                placeholder="Your Company Name"
-                {...register("companyName")}
+                id="naziv"
+                placeholder="Naziv vaše kompanije"
+                {...register("naziv")}
               />
-              {errors.companyName && (
+              {errors.naziv && (
                 <p className="text-destructive text-sm">
-                  {errors.companyName.message}
+                  {errors.naziv.message}
                 </p>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="companyAddress">Company Address *</Label>
+              <Label htmlFor="adresa">Adresa *</Label>
               <Textarea
-                id="companyAddress"
-                placeholder="Street Address&#10;City, State ZIP&#10;Country"
+                id="adresa"
+                placeholder="Država, poštanski broj, grad, ulica i broj"
                 rows={3}
-                {...register("companyAddress")}
+                {...register("adresa")}
               />
-              {errors.companyAddress && (
+              {errors.adresa && (
                 <p className="text-destructive text-sm">
-                  {errors.companyAddress.message}
+                  {errors.adresa.message}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="pib">PIB *</Label>
+              <Input id="pib" placeholder="123456789" {...register("pib")} />
+              {errors.pib && (
+                <p className="text-destructive text-sm">{errors.pib.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="maticniBroj">Matični broj *</Label>
+              <Input
+                id="maticniBroj"
+                placeholder="12345678"
+                {...register("maticniBroj")}
+              />
+              {errors.maticniBroj && (
+                <p className="text-destructive text-sm">
+                  {errors.maticniBroj.message}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="kontaktEmail">Kontakt email *</Label>
+              <Input
+                id="kontaktEmail"
+                type="email"
+                placeholder="email@kompanija.rs"
+                {...register("kontaktEmail")}
+              />
+              {errors.kontaktEmail && (
+                <p className="text-destructive text-sm">
+                  {errors.kontaktEmail.message}
                 </p>
               )}
             </div>
@@ -265,37 +290,62 @@ export default function InvoiceForm() {
         {/* Client Information */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              Bill To
-              <Badge variant="secondary">Client</Badge>
-            </CardTitle>
+            <CardTitle className="flex items-center gap-2">Račun za</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="clientName">Client Name *</Label>
+              <Label htmlFor="clientNaziv">Naziv *</Label>
               <Input
-                id="clientName"
-                placeholder="Client Name"
-                {...register("clientName")}
+                id="clientNaziv"
+                placeholder="Naziv klijenta"
+                {...register("clientNaziv")}
               />
-              {errors.clientName && (
+              {errors.clientNaziv && (
                 <p className="text-destructive text-sm">
-                  {errors.clientName.message}
+                  {errors.clientNaziv.message}
                 </p>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="clientAddress">Client Address *</Label>
+              <Label htmlFor="clientAdresa">Adresa *</Label>
               <Textarea
-                id="clientAddress"
-                placeholder="Street Address&#10;City, State ZIP&#10;Country"
+                id="clientAdresa"
+                placeholder="Država, poštanski broj, grad, ulica i broj"
                 rows={3}
-                {...register("clientAddress")}
+                {...register("clientAdresa")}
               />
-              {errors.clientAddress && (
+              {errors.clientAdresa && (
                 <p className="text-destructive text-sm">
-                  {errors.clientAddress.message}
+                  {errors.clientAdresa.message}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="clientPib">PIB *</Label>
+              <Input
+                id="clientPib"
+                placeholder="123456789"
+                {...register("clientPib")}
+              />
+              {errors.clientPib && (
+                <p className="text-destructive text-sm">
+                  {errors.clientPib.message}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="clientMaticniBroj">Matični broj *</Label>
+              <Input
+                id="clientMaticniBroj"
+                placeholder="12345678"
+                {...register("clientMaticniBroj")}
+              />
+              {errors.clientMaticniBroj && (
+                <p className="text-destructive text-sm">
+                  {errors.clientMaticniBroj.message}
                 </p>
               )}
             </div>
