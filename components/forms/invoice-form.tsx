@@ -31,10 +31,9 @@ export default function InvoiceForm() {
       pib: "",
       maticniBroj: "",
       kontaktEmail: "",
-      invoiceNumber: new Date().toISOString().split("T")[0].replace(/-/g, ""),
-      invoiceDate: new Date().toISOString().split("T")[0],
-      dueDate: "",
-      terms: "Due on Receipt",
+      tekuciRacun: "",
+      brojFakture: new Date().toISOString().split("T")[0].replace(/-/g, ""),
+      datumFakture: new Date().toISOString().split("T")[0],
       clientNaziv: "",
       clientAdresa: "",
       clientPib: "",
@@ -74,10 +73,12 @@ export default function InvoiceForm() {
     if (!data.maticniBroj?.trim())
       errors.maticniBroj = "Matični broj je obavezan";
     if (!data.kontaktEmail?.trim()) errors.kontaktEmail = "Email je obavezan";
-    if (!data.invoiceNumber?.trim())
-      errors.invoiceNumber = "Invoice number is required";
-    if (!data.invoiceDate?.trim())
-      errors.invoiceDate = "Invoice date is required";
+    if (!data.tekuciRacun?.trim())
+      errors.tekuciRacun = "Tekući račun je obavezan";
+    if (!data.brojFakture?.trim())
+      errors.brojFakture = "Broj fakture je obavezan";
+    if (!data.datumFakture?.trim())
+      errors.datumFakture = "Datum fakture je obavezan";
     if (!data.clientNaziv?.trim()) errors.clientNaziv = "Naziv je obavezan";
     if (!data.clientAdresa?.trim()) errors.clientAdresa = "Adresa je obavezna";
     if (!data.clientPib?.trim()) errors.clientPib = "PIB je obavezan";
@@ -220,7 +221,7 @@ export default function InvoiceForm() {
               )}
             </div>
 
-            <div className="space-y-2 md:col-span-2">
+            <div className="space-y-2">
               <Label htmlFor="kontaktEmail">Kontakt email *</Label>
               <Input
                 id="kontaktEmail"
@@ -234,55 +235,55 @@ export default function InvoiceForm() {
                 </p>
               )}
             </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="tekuciRacun">Tekući račun *</Label>
+              <Input
+                id="tekuciRacun"
+                placeholder="123-456789-12"
+                {...register("tekuciRacun")}
+              />
+              {errors.tekuciRacun && (
+                <p className="text-destructive text-sm">
+                  {errors.tekuciRacun.message}
+                </p>
+              )}
+            </div>
           </CardContent>
         </Card>
 
-        {/* Invoice Details */}
+        {/* Detalji fakture */}
         <Card>
           <CardHeader>
-            <CardTitle>Invoice Details</CardTitle>
+            <CardTitle>Detalji fakture</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="invoiceNumber">Invoice Number *</Label>
+              <Label htmlFor="brojFakture">Broj fakture *</Label>
               <Input
-                id="invoiceNumber"
-                placeholder="INV-000001"
-                {...register("invoiceNumber")}
+                id="brojFakture"
+                placeholder="001/2024"
+                {...register("brojFakture")}
               />
-              {errors.invoiceNumber && (
+              {errors.brojFakture && (
                 <p className="text-destructive text-sm">
-                  {errors.invoiceNumber.message}
+                  {errors.brojFakture.message}
                 </p>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="invoiceDate">Invoice Date *</Label>
+              <Label htmlFor="datumFakture">Datum fakture *</Label>
               <Input
-                id="invoiceDate"
+                id="datumFakture"
                 type="date"
-                {...register("invoiceDate")}
+                {...register("datumFakture")}
               />
-              {errors.invoiceDate && (
+              {errors.datumFakture && (
                 <p className="text-destructive text-sm">
-                  {errors.invoiceDate.message}
+                  {errors.datumFakture.message}
                 </p>
               )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="dueDate">Due Date</Label>
-              <Input id="dueDate" type="date" {...register("dueDate")} />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="terms">Terms</Label>
-              <Input
-                id="terms"
-                placeholder="Due on Receipt"
-                {...register("terms")}
-              />
             </div>
           </CardContent>
         </Card>

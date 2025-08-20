@@ -27,6 +27,8 @@ export function generateInvoicePDF(data: InvoiceFormData): void {
   doc.text(`Matični broj: ${data.maticniBroj}`, 20, yPosition);
   yPosition += 5;
   doc.text(`Email: ${data.kontaktEmail}`, 20, yPosition);
+  yPosition += 5;
+  doc.text(`Tekući račun: ${data.tekuciRacun}`, 20, yPosition);
 
   // Invoice Title and Number (Top Right)
   doc.setFontSize(20);
@@ -34,12 +36,11 @@ export function generateInvoicePDF(data: InvoiceFormData): void {
   doc.text("INVOICE", 150, 30);
 
   doc.setFontSize(12);
-  doc.text(`# ${data.invoiceNumber}`, 150, 45);
+  doc.text(`# ${data.brojFakture}`, 150, 45);
 
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
-  doc.text(`Invoice Date: ${data.invoiceDate}`, 150, 60);
-  doc.text(`Terms: ${data.terms}`, 150, 70);
+  doc.text(`Datum fakture: ${data.datumFakture}`, 150, 60);
 
   // Bill To Section
   yPosition = 95;
@@ -184,5 +185,5 @@ export function generateInvoicePDF(data: InvoiceFormData): void {
   }
 
   // Save the PDF
-  doc.save(`invoice-${data.invoiceNumber}.pdf`);
+  doc.save(`faktura-${data.brojFakture}.pdf`);
 }

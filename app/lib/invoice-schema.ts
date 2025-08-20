@@ -16,12 +16,11 @@ export const invoiceSchema = z.object({
     .string()
     .email("Nije validan email")
     .min(1, "Email je obavezan"),
+  tekuciRacun: z.string().min(1, "Tekući račun je obavezan"),
 
-  // Invoice Details
-  invoiceNumber: z.string().min(1, "Invoice number is required"),
-  invoiceDate: z.string().min(1, "Invoice date is required"),
-  dueDate: z.string().optional(),
-  terms: z.string().optional().default("Due on Receipt"),
+  // Detalji fakture
+  brojFakture: z.string().min(1, "Broj fakture je obavezan"),
+  datumFakture: z.string().min(1, "Datum fakture je obavezan"),
 
   // Račun za
   clientNaziv: z.string().min(1, "Naziv je obavezan"),
