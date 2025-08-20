@@ -64,20 +64,14 @@ export function generateInvoicePDF(data: InvoiceFormData): void {
   doc.text(`Matični broj: ${data.clientMaticniBroj}`, 20, yPosition);
 
   // Calculate totals
-  const subtotal = data.items.reduce(
-    (sum, item) => sum + item.quantity * item.rate,
-    0,
-  );
-  const taxAmount = subtotal * (data.taxRate / 100);
-  const total = subtotal + taxAmount;
+  const total = data.items.reduce((sum, item) => sum + item.iznos, 0);
 
-  // Balance Due (Top Right)
   doc.setFontSize(12);
   doc.setFont("helvetica", "bold");
-  doc.text("Balance Due", 150, 80);
+  doc.text("Ukupno", 150, 80);
   doc.setFontSize(16);
   doc.text(
-    `$${total.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+    `${total.toLocaleString("sr-RS", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} RSD`,
     150,
     95,
   );
@@ -89,10 +83,8 @@ export function generateInvoicePDF(data: InvoiceFormData): void {
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
   doc.text("#", 20, yPosition);
-  doc.text("Item & Description", 30, yPosition);
-  doc.text("Qty", 120, yPosition);
-  doc.text("Rate", 140, yPosition);
-  doc.text("Amount", 170, yPosition);
+  doc.text("Opis", 30, yPosition);
+  doc.text("Iznos (RSD)", 150, yPosition);
 
   // Table Header Line
   doc.line(20, yPosition + 2, 190, yPosition + 2);
@@ -102,23 +94,15 @@ export function generateInvoicePDF(data: InvoiceFormData): void {
   // Table Items
   doc.setFont("helvetica", "normal");
   data.items.forEach((item, index) => {
-    const amount = item.quantity * item.rate;
-
     doc.text(`${index + 1}`, 20, yPosition);
 
     // Handle multi-line descriptions
-    const descriptionLines = doc.splitTextToSize(item.description, 85);
+    const descriptionLines = doc.splitTextToSize(item.opis, 115);
     doc.text(descriptionLines, 30, yPosition);
 
-    doc.text(item.quantity.toString(), 120, yPosition);
     doc.text(
-      `$${item.rate.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-      140,
-      yPosition,
-    );
-    doc.text(
-      `$${amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-      170,
+      `${item.iznos.toLocaleString("sr-RS", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} RSD`,
+      150,
       yPosition,
     );
 
@@ -130,57 +114,36 @@ export function generateInvoicePDF(data: InvoiceFormData): void {
   doc.line(120, yPosition, 190, yPosition);
   yPosition += 10;
 
-  doc.setFont("helvetica", "normal");
-  doc.text("Sub Total", 140, yPosition);
-  doc.text(
-    `$${subtotal.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-    170,
-    yPosition,
-  );
-
-  yPosition += 8;
-  doc.text(`Tax Rate`, 140, yPosition);
-  doc.text(`${data.taxRate}%`, 170, yPosition);
-
-  yPosition += 8;
   doc.setFont("helvetica", "bold");
-  doc.text("Total", 140, yPosition);
+  doc.text("Ukupno", 140, yPosition);
   doc.text(
-    `$${total.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+    `${total.toLocaleString("sr-RS", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} RSD`,
     170,
     yPosition,
   );
 
-  yPosition += 8;
-  doc.text("Balance Due", 140, yPosition);
-  doc.text(
-    `$${total.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-    170,
-    yPosition,
-  );
-
-  // Notes Section
-  if (data.notes) {
+  // Napomene Section
+  if (data.napomene) {
     yPosition += 20;
     doc.setFont("helvetica", "bold");
-    doc.text("Notes", 20, yPosition);
+    doc.text("Napomene", 20, yPosition);
 
     doc.setFont("helvetica", "normal");
     yPosition += 8;
-    const notesLines = doc.splitTextToSize(data.notes, 170);
+    const notesLines = doc.splitTextToSize(data.napomene, 170);
     doc.text(notesLines, 20, yPosition);
     yPosition += notesLines.length * 5;
   }
 
-  // Terms & Conditions
-  if (data.termsAndConditions) {
+  // Uslovi
+  if (data.uslovi) {
     yPosition += 10;
     doc.setFont("helvetica", "bold");
-    doc.text("Terms & Conditions", 20, yPosition);
+    doc.text("Uslovi", 20, yPosition);
 
     doc.setFont("helvetica", "normal");
     yPosition += 8;
-    const termsLines = doc.splitTextToSize(data.termsAndConditions, 170);
+    const termsLines = doc.splitTextToSize(data.uslovi, 170);
     doc.text(termsLines, 20, yPosition);
   }
 

@@ -3,7 +3,7 @@
 import { Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
-import { Badge } from "@/components/ui/badge";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -38,10 +38,9 @@ export default function InvoiceForm() {
       clientAdresa: "",
       clientPib: "",
       clientMaticniBroj: "",
-      items: [{ description: "", quantity: 1, rate: 0 }],
-      taxRate: 0,
-      notes: "",
-      termsAndConditions: "",
+      items: [{ opis: "", iznos: 0 }],
+      napomene: "",
+      uslovi: "",
     },
   });
 
@@ -51,16 +50,12 @@ export default function InvoiceForm() {
   });
 
   const watchedItems = watch("items");
-  const watchedTaxRate = watch("taxRate") || 0;
 
   // Calculate totals
-  const subtotal =
+  const total =
     watchedItems?.reduce((sum, item) => {
-      return sum + (item?.quantity || 0) * (item?.rate || 0);
+      return sum + (item?.iznos || 0);
     }, 0) || 0;
-
-  const taxAmount = subtotal * (watchedTaxRate / 100);
-  const total = subtotal + taxAmount;
 
   const validateForm = (data: InvoiceFormData) => {
     // biome-ignore lint/suspicious/noExplicitAny: reason
@@ -85,32 +80,22 @@ export default function InvoiceForm() {
     if (!data.clientMaticniBroj?.trim())
       errors.clientMaticniBroj = "Matični broj je obavezan";
 
-    // Items validation
+    // Stavke validation
     if (!data.items || data.items.length === 0) {
-      errors.items = "At least one item is required";
+      errors.items = "Najmanje jedna stavka je potrebna";
     } else {
       data.items.forEach((item, index) => {
-        if (!item.description?.trim()) {
+        if (!item.opis?.trim()) {
           if (!errors.items) errors.items = [];
           if (!errors.items[index]) errors.items[index] = {};
-          errors.items[index].description = "Item description is required";
+          errors.items[index].opis = "Opis je obavezan";
         }
-        if (!item.quantity || item.quantity <= 0) {
+        if (!item.iznos || item.iznos <= 0) {
           if (!errors.items) errors.items = [];
           if (!errors.items[index]) errors.items[index] = {};
-          errors.items[index].quantity = "Quantity must be greater than 0";
-        }
-        if (!item.rate || item.rate <= 0) {
-          if (!errors.items) errors.items = [];
-          if (!errors.items[index]) errors.items[index] = {};
-          errors.items[index].rate = "Rate must be greater than 0";
+          errors.items[index].iznos = "Iznos mora biti veći od 0";
         }
       });
-    }
-
-    // Tax rate validation
-    if (data.taxRate < 0 || data.taxRate > 100) {
-      errors.taxRate = "Tax rate must be between 0 and 100";
     }
 
     return errors;
@@ -126,18 +111,15 @@ export default function InvoiceForm() {
         if (key === "items" && Array.isArray(validationErrors.items)) {
           // biome-ignore lint/suspicious/noExplicitAny: reason
           validationErrors.items.forEach((itemErrors: any, index: number) => {
-            if (itemErrors.description) {
-              setError(`items.${index}.description`, {
-                message: itemErrors.description,
+            if (itemErrors.opis) {
+              setError(`items.${index}.opis`, {
+                message: itemErrors.opis,
               });
             }
-            if (itemErrors.quantity) {
-              setError(`items.${index}.quantity`, {
-                message: itemErrors.quantity,
+            if (itemErrors.iznos) {
+              setError(`items.${index}.iznos`, {
+                message: itemErrors.iznos,
               });
-            }
-            if (itemErrors.rate) {
-              setError(`items.${index}.rate`, { message: itemErrors.rate });
             }
           });
         } else {
@@ -353,123 +335,82 @@ export default function InvoiceForm() {
           </CardContent>
         </Card>
 
-        {/* Items */}
+        {/* Stavke */}
         <Card>
           <CardHeader>
-            <CardTitle>Items</CardTitle>
+            <CardTitle>Stavke</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="overflow-x-auto">
-                <div className="min-w-[600px]">
-                  <div className="mb-2 grid grid-cols-12 gap-2 font-medium text-muted-foreground text-sm">
-                    <div className="col-span-1">#</div>
-                    <div className="col-span-5">Description *</div>
-                    <div className="col-span-2">Quantity *</div>
-                    <div className="col-span-2">Rate *</div>
-                    <div className="col-span-1">Amount</div>
-                    <div className="col-span-1">Action</div>
-                  </div>
-                  <Separator className="mb-4" />
+              <div className="space-y-4">
+                <div className="grid grid-cols-12 gap-2 font-medium text-muted-foreground text-sm">
+                  <div className="col-span-8">Opis *</div>
+                  <div className="col-span-3">Iznos (RSD) *</div>
+                  <div className="col-span-1">Akcija</div>
+                </div>
 
-                  {fields.map((field, index) => {
-                    const quantity = watchedItems?.[index]?.quantity || 0;
-                    const rate = watchedItems?.[index]?.rate || 0;
-                    const amount = quantity * rate;
+                <Separator />
 
-                    return (
-                      <div
-                        key={field.id}
-                        className="mb-4 grid grid-cols-12 items-start gap-2"
-                      >
-                        <div className="col-span-1 pt-2">
-                          <Badge variant="outline" className="text-xs">
-                            {index + 1}
-                          </Badge>
-                        </div>
-
-                        <div className="col-span-5 space-y-1">
-                          <Textarea
-                            placeholder="Item description"
-                            rows={2}
-                            {...register(`items.${index}.description`)}
-                          />
-                          {errors.items?.[index]?.description && (
-                            <p className="text-destructive text-xs">
-                              {errors.items[index]?.description?.message}
-                            </p>
-                          )}
-                        </div>
-
-                        <div className="col-span-2 space-y-1">
-                          <Input
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            placeholder="1"
-                            {...register(`items.${index}.quantity`, {
-                              valueAsNumber: true,
-                            })}
-                          />
-                          {errors.items?.[index]?.quantity && (
-                            <p className="text-destructive text-xs">
-                              {errors.items[index]?.quantity?.message}
-                            </p>
-                          )}
-                        </div>
-
-                        <div className="col-span-2 space-y-1">
-                          <Input
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            placeholder="0.00"
-                            {...register(`items.${index}.rate`, {
-                              valueAsNumber: true,
-                            })}
-                          />
-                          {errors.items?.[index]?.rate && (
-                            <p className="text-destructive text-xs">
-                              {errors.items[index]?.rate?.message}
-                            </p>
-                          )}
-                        </div>
-
-                        <div className="col-span-1 pt-2">
-                          <Badge variant="secondary">
-                            ${amount.toFixed(2)}
-                          </Badge>
-                        </div>
-
-                        <div className="col-span-1 pt-2">
-                          {fields.length > 1 && (
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => remove(index)}
-                              className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </div>
+                <div className="space-y-4">
+                  {fields.map((field, index) => (
+                    <div
+                      key={field.id}
+                      className="grid grid-cols-12 items-start gap-2"
+                    >
+                      <div className="col-span-8 space-y-2">
+                        <Textarea
+                          placeholder="Opis stavke"
+                          rows={2}
+                          {...register(`items.${index}.opis`)}
+                        />
+                        {errors.items?.[index]?.opis && (
+                          <p className="text-destructive text-xs">
+                            {errors.items[index]?.opis?.message}
+                          </p>
+                        )}
                       </div>
-                    );
-                  })}
+
+                      <div className="col-span-3 space-y-2">
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          placeholder="0.00"
+                          {...register(`items.${index}.iznos`, {
+                            valueAsNumber: true,
+                          })}
+                        />
+                        {errors.items?.[index]?.iznos && (
+                          <p className="text-destructive text-xs">
+                            {errors.items[index]?.iznos?.message}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="col-span-1">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          onClick={() => remove(index)}
+                          disabled={fields.length === 1}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
 
               <Button
                 type="button"
                 variant="outline"
-                onClick={() =>
-                  append({ description: "", quantity: 1, rate: 0 })
-                }
+                onClick={() => append({ opis: "", iznos: 0 })}
                 className="w-full"
               >
                 <Plus className="mr-2 h-4 w-4" />
-                Add Item
+                Dodaj stavku
               </Button>
 
               {errors.items && (
@@ -481,73 +422,42 @@ export default function InvoiceForm() {
           </CardContent>
         </Card>
 
-        {/* Tax & Totals */}
+        {/* Ukupno */}
         <Card>
           <CardHeader>
-            <CardTitle>Tax & Totals</CardTitle>
+            <CardTitle>Ukupno</CardTitle>
           </CardHeader>
-          <CardContent className="grid gap-6 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="taxRate">Tax Rate (%)</Label>
-              <Input
-                id="taxRate"
-                type="number"
-                step="0.01"
-                min="0"
-                max="100"
-                placeholder="0.00"
-                {...register("taxRate", {
-                  valueAsNumber: true,
-                })}
-              />
-              {errors.taxRate && (
-                <p className="text-destructive text-sm">
-                  {errors.taxRate.message}
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Subtotal:</span>
-                <span className="font-medium">${subtotal.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Tax:</span>
-                <span className="font-medium">${taxAmount.toFixed(2)}</span>
-              </div>
-              <Separator />
-              <div className="flex justify-between font-semibold text-lg">
-                <span>Total:</span>
-                <span>${total.toFixed(2)}</span>
-              </div>
+          <CardContent>
+            <div className="flex justify-between font-semibold text-lg">
+              <span>Ukupno:</span>
+              <span>{total.toFixed(2)} RSD</span>
             </div>
           </CardContent>
         </Card>
 
-        {/* Additional Information */}
+        {/* Dodatne informacije */}
         <Card>
           <CardHeader>
-            <CardTitle>Additional Information</CardTitle>
+            <CardTitle>Dodatne informacije</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="notes">Notes</Label>
+              <Label htmlFor="napomene">Napomene</Label>
               <Textarea
-                id="notes"
-                placeholder="Thank you for your business!"
+                id="napomene"
+                placeholder="Hvala vam na poslovanju!"
                 rows={3}
-                {...register("notes")}
+                {...register("napomene")}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="termsAndConditions">Terms & Conditions</Label>
+              <Label htmlFor="uslovi">Uslovi</Label>
               <Textarea
-                id="termsAndConditions"
-                placeholder="All services provided are subject to the terms and conditions outlined in the agreement or engagement letter."
+                id="uslovi"
+                placeholder="Svi pruženi servisi podležu uslovima navedenim u ugovoru ili sporazumu."
                 rows={3}
-                {...register("termsAndConditions")}
+                {...register("uslovi")}
               />
             </div>
           </CardContent>
@@ -561,7 +471,7 @@ export default function InvoiceForm() {
             disabled={isGenerating}
             className="bg-green-600 hover:bg-green-700"
           >
-            {isGenerating ? "Generating PDF..." : "Generate Invoice PDF"}
+            {isGenerating ? "Generiše se PDF..." : "Generiši fakturu"}
           </Button>
         </div>
       </form>

@@ -1,9 +1,8 @@
 import { z } from "zod";
 
 export const invoiceItemSchema = z.object({
-  description: z.string().min(1, "Item description is required"),
-  quantity: z.number().min(0.01, "Quantity must be greater than 0"),
-  rate: z.number().min(0.01, "Rate must be greater than 0"),
+  opis: z.string().min(1, "Opis je obavezan"),
+  iznos: z.number().min(0.01, "Iznos mora biti veći od 0"),
 });
 
 export const invoiceSchema = z.object({
@@ -28,15 +27,12 @@ export const invoiceSchema = z.object({
   clientPib: z.string().min(1, "PIB je obavezan"),
   clientMaticniBroj: z.string().min(1, "Matični broj je obavezan"),
 
-  // Items
-  items: z.array(invoiceItemSchema).min(1, "At least one item is required"),
+  // Stavke
+  items: z.array(invoiceItemSchema).min(1, "Najmanje jedna stavka je potrebna"),
 
-  // Tax and totals
-  taxRate: z.number().min(0).max(100).optional().default(0),
-
-  // Notes
-  notes: z.string().optional(),
-  termsAndConditions: z.string().optional(),
+  // Dodatne informacije
+  napomene: z.string().optional(),
+  uslovi: z.string().optional(),
 });
 
 export type InvoiceFormData = z.infer<typeof invoiceSchema>;
