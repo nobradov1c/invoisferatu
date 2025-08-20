@@ -15,7 +15,7 @@ export const invoiceSchema = z.object({
   invoiceNumber: z.string().min(1, "Invoice number is required"),
   invoiceDate: z.string().min(1, "Invoice date is required"),
   dueDate: z.string().optional(),
-  terms: z.string().default("Due on Receipt"),
+  terms: z.string().optional().default("Due on Receipt"),
 
   // Client Information
   clientName: z.string().min(1, "Client name is required"),
@@ -25,7 +25,7 @@ export const invoiceSchema = z.object({
   items: z.array(invoiceItemSchema).min(1, "At least one item is required"),
 
   // Tax and totals
-  taxRate: z.number().min(0).max(100).default(0),
+  taxRate: z.number().min(0).max(100).optional().default(0),
 
   // Notes
   notes: z.string().optional(),

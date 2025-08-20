@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { ThemeProvider } from "@/components/theme-provider";
+import { Header } from "@/components/header";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -16,9 +18,6 @@ export const metadata: Metadata = {
   title: "Invoisferatu",
   description: "Generate professional invoices offline with ease",
   manifest: "/manifest.json",
-  themeColor: "#3b82f6",
-  viewport:
-    "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -31,6 +30,14 @@ export const metadata: Metadata = {
     "msapplication-TileColor": "#3b82f6",
     "msapplication-config": "browserconfig.xml",
   },
+};
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: "#3b82f6",
 };
 
 export default function RootLayout({
@@ -63,9 +70,19 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased font-sans`}
       >
-        {children}
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <div className="relative min-h-screen bg-background text-foreground">
+            <Header />
+            <main className="pb-8">{children}</main>
+          </div>
+        </ThemeProvider>
       </body>
     </html>
   );
