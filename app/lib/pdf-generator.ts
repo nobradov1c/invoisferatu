@@ -1,175 +1,294 @@
 import jsPDF from "jspdf";
+import QRCode from "qrcode";
 import type { InvoiceFormData } from "./invoice-schema";
 
-export function generateInvoicePDF(data: InvoiceFormData): void {
+export async function generateInvoicePDF(data: InvoiceFormData): Promise<void> {
   const doc = new jsPDF();
 
-  // Set up fonts and colors
+  // Set default font
   doc.setFont("helvetica");
 
-  // Company Information (Top Left)
-  doc.setFontSize(12);
-  doc.setFont("helvetica", "bold");
-  doc.text(data.companyName, 20, 30);
+  // Page dimensions
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const margin = 20;
 
+  // Colors
+  const primaryColor = [41, 128, 185]; // Blue
+  const grayColor = [128, 128, 128];
+
+  // Header Section
+  doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.rect(0, 0, pageWidth, 35, "F");
+
+  // FAKTURA title
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(24);
+  doc.setFont("helvetica", "bold");
+  doc.text("FAKTURA", margin, 25);
+
+  // Invoice number and date (white text on blue background)
+  doc.setFontSize(12);
   doc.setFont("helvetica", "normal");
+  doc.text(`# ${data.brojFakture}`, pageWidth - margin - 60, 20);
+  doc.text(`Datum: ${data.datumFakture}`, pageWidth - margin - 60, 30);
+
+  // Reset text color
+  doc.setTextColor(0, 0, 0);
+
+  let yPos = 50;
+
+  // Company Information Section
+  doc.setFontSize(14);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.text("IZDAVALAC FAKTURE", margin, yPos);
+
+  yPos += 8;
   doc.setFontSize(10);
-  const companyAddressLines = data.companyAddress.split("\n");
-  let yPosition = 40;
-  companyAddressLines.forEach((line) => {
-    doc.text(line, 20, yPosition);
-    yPosition += 5;
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(0, 0, 0);
+  doc.text(data.naziv, margin, yPos);
+
+  yPos += 6;
+  doc.setFont("helvetica", "normal");
+
+  // Split address into lines
+  const addressLines = data.adresa.split("\n");
+  addressLines.forEach((line) => {
+    if (line.trim()) {
+      doc.text(line.trim(), margin, yPos);
+      yPos += 5;
+    }
   });
 
-  // Invoice Title and Number (Top Right)
-  doc.setFontSize(20);
+  doc.text(`PIB: ${data.pib}`, margin, yPos);
+  yPos += 5;
+  doc.text(`Matični broj: ${data.maticniBroj}`, margin, yPos);
+  yPos += 5;
+  doc.text(`Email: ${data.kontaktEmail}`, margin, yPos);
+  yPos += 5;
+  doc.text(`Tekući račun: ${data.tekuciRacun}`, margin, yPos);
+
+  // Calculate total for QR and display
+  const total = data.items.reduce((sum, item) => sum + item.iznos, 0);
+
+  // Generate and add QR Code
+  const qrString = generateQRString(data, total);
+  console.log("Generated QR code string:", qrString);
+
+  try {
+    const qrCodeDataURL = await QRCode.toDataURL(qrString, {
+      width: 150,
+      margin: 2,
+      color: {
+        dark: "#000000",
+        light: "#FFFFFF",
+      },
+      errorCorrectionLevel: "M",
+    });
+
+    // Add QR Code (top right)
+    const qrSize = 40;
+    const qrX = pageWidth - margin - qrSize;
+    const qrY = 45;
+    doc.addImage(qrCodeDataURL, "PNG", qrX, qrY, qrSize, qrSize);
+
+    // QR Code label
+    doc.setFontSize(8);
+    doc.setTextColor(grayColor[0], grayColor[1], grayColor[2]);
+    doc.text("QR kod za plaćanje", qrX, qrY + qrSize + 5);
+    doc.setTextColor(0, 0, 0);
+  } catch (error) {
+    console.error("Error generating QR code:", error);
+    // Add fallback text if QR code fails
+    doc.setFontSize(8);
+    doc.setTextColor(200, 0, 0);
+    doc.text("QR kod nije dostupan", pageWidth - margin - 60, 65);
+    doc.setTextColor(0, 0, 0);
+  }
+
+  // Client Information Section
+  yPos = Math.max(yPos + 20, 110); // Ensure we don't overlap with QR code
+
+  doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
-  doc.text("INVOICE", 150, 30);
+  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.text("PRIMA FAKTURE", margin, yPos);
 
-  doc.setFontSize(12);
-  doc.text(`# ${data.invoiceNumber}`, 150, 45);
-
+  yPos += 8;
   doc.setFontSize(10);
-  doc.setFont("helvetica", "normal");
-  doc.text(`Invoice Date: ${data.invoiceDate}`, 150, 60);
-  doc.text(`Terms: ${data.terms}`, 150, 70);
-
-  // Bill To Section
-  yPosition = 80;
   doc.setFont("helvetica", "bold");
-  doc.text("Bill To", 20, yPosition);
+  doc.setTextColor(0, 0, 0);
+  doc.text(data.clientNaziv, margin, yPos);
 
+  yPos += 6;
   doc.setFont("helvetica", "normal");
-  yPosition += 10;
-  doc.text(data.clientName, 20, yPosition);
 
-  const clientAddressLines = data.clientAddress.split("\n");
+  // Split client address into lines
+  const clientAddressLines = data.clientAdresa.split("\n");
   clientAddressLines.forEach((line) => {
-    yPosition += 5;
-    doc.text(line, 20, yPosition);
+    if (line.trim()) {
+      doc.text(line.trim(), margin, yPos);
+      yPos += 5;
+    }
   });
 
-  // Calculate totals
-  const subtotal = data.items.reduce(
-    (sum, item) => sum + item.quantity * item.rate,
-    0,
-  );
-  const taxAmount = subtotal * (data.taxRate / 100);
-  const total = subtotal + taxAmount;
+  doc.text(`PIB: ${data.clientPib}`, margin, yPos);
+  yPos += 5;
+  doc.text(`Matični broj: ${data.clientMaticniBroj}`, margin, yPos);
 
-  // Balance Due (Top Right)
-  doc.setFontSize(12);
-  doc.setFont("helvetica", "bold");
-  doc.text("Balance Due", 150, 80);
-  doc.setFontSize(16);
-  doc.text(
-    `$${total.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-    150,
-    95,
-  );
+  // Items table
+  yPos += 20;
 
-  // Items Table
-  yPosition = 120;
+  // Table header
+  doc.setFillColor(240, 240, 240);
+  doc.rect(margin, yPos - 5, pageWidth - margin * 2, 15, "F");
 
-  // Table Headers
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
-  doc.text("#", 20, yPosition);
-  doc.text("Item & Description", 30, yPosition);
-  doc.text("Qty", 120, yPosition);
-  doc.text("Rate", 140, yPosition);
-  doc.text("Amount", 170, yPosition);
+  doc.text("#", margin + 3, yPos + 3);
+  doc.text("OPIS", margin + 15, yPos + 3);
+  doc.text("IZNOS (RSD)", pageWidth - margin - 35, yPos + 3);
 
-  // Table Header Line
-  doc.line(20, yPosition + 2, 190, yPosition + 2);
+  // Table header line
+  doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.setLineWidth(0.5);
+  doc.line(margin, yPos + 8, pageWidth - margin, yPos + 8);
 
-  yPosition += 10;
+  yPos += 18;
 
-  // Table Items
+  // Table items
   doc.setFont("helvetica", "normal");
+  doc.setDrawColor(220, 220, 220);
+  doc.setLineWidth(0.2);
+
   data.items.forEach((item, index) => {
-    const amount = item.quantity * item.rate;
+    const rowHeight = 12;
 
-    doc.text(`${index + 1}`, 20, yPosition);
+    // Alternating row colors
+    if (index % 2 === 0) {
+      doc.setFillColor(248, 248, 248);
+      doc.rect(margin, yPos - 3, pageWidth - margin * 2, rowHeight, "F");
+    }
 
-    // Handle multi-line descriptions
-    const descriptionLines = doc.splitTextToSize(item.description, 85);
-    doc.text(descriptionLines, 30, yPosition);
+    // Item number
+    doc.text(`${index + 1}`, margin + 3, yPos + 4);
 
-    doc.text(item.quantity.toString(), 120, yPosition);
-    doc.text(
-      `$${item.rate.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-      140,
-      yPosition,
-    );
-    doc.text(
-      `$${amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-      170,
-      yPosition,
-    );
+    // Item description (with text wrapping)
+    const descriptionLines = doc.splitTextToSize(item.opis, 120);
+    doc.text(descriptionLines, margin + 15, yPos + 4);
 
-    yPosition += Math.max(10, descriptionLines.length * 5);
+    // Item amount (right aligned)
+    const amountText = `${item.iznos.toLocaleString("sr-RS", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })} RSD`;
+    const amountWidth = doc.getTextWidth(amountText);
+    doc.text(amountText, pageWidth - margin - amountWidth - 3, yPos + 4);
+
+    yPos += Math.max(rowHeight, descriptionLines.length * 5 + 6);
+
+    // Row separator
+    doc.line(margin, yPos - 6, pageWidth - margin, yPos - 6);
   });
 
-  // Totals Section
-  yPosition += 10;
-  doc.line(120, yPosition, 190, yPosition);
-  yPosition += 10;
+  // Total section
+  yPos += 10;
 
-  doc.setFont("helvetica", "normal");
-  doc.text("Sub Total", 140, yPosition);
-  doc.text(
-    `$${subtotal.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-    170,
-    yPosition,
-  );
+  // Total background
+  doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.rect(pageWidth - margin - 80, yPos - 5, 80, 20, "F");
 
-  yPosition += 8;
-  doc.text(`Tax Rate`, 140, yPosition);
-  doc.text(`${data.taxRate}%`, 170, yPosition);
-
-  yPosition += 8;
+  // Total text
+  doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
-  doc.text("Total", 140, yPosition);
-  doc.text(
-    `$${total.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-    170,
-    yPosition,
-  );
+  doc.setFontSize(12);
+  doc.text("UKUPNO:", pageWidth - margin - 75, yPos + 3);
 
-  yPosition += 8;
-  doc.text("Balance Due", 140, yPosition);
-  doc.text(
-    `$${total.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-    170,
-    yPosition,
-  );
+  const totalText = `${total.toLocaleString("sr-RS", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })} RSD`;
+  const totalWidth = doc.getTextWidth(totalText);
+  doc.text(totalText, pageWidth - margin - totalWidth - 5, yPos + 10);
 
-  // Notes Section
-  if (data.notes) {
-    yPosition += 20;
+  // Reset text color
+  doc.setTextColor(0, 0, 0);
+  yPos += 35;
+
+  // Additional information sections
+  if (data.napomene?.trim()) {
     doc.setFont("helvetica", "bold");
-    doc.text("Notes", 20, yPosition);
+    doc.setFontSize(11);
+    doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+    doc.text("NAPOMENE", margin, yPos);
 
+    yPos += 8;
     doc.setFont("helvetica", "normal");
-    yPosition += 8;
-    const notesLines = doc.splitTextToSize(data.notes, 170);
-    doc.text(notesLines, 20, yPosition);
-    yPosition += notesLines.length * 5;
+    doc.setFontSize(10);
+    doc.setTextColor(0, 0, 0);
+
+    const notesLines = doc.splitTextToSize(
+      data.napomene,
+      pageWidth - margin * 2,
+    );
+    doc.text(notesLines, margin, yPos);
+    yPos += notesLines.length * 5 + 10;
   }
 
-  // Terms & Conditions
-  if (data.termsAndConditions) {
-    yPosition += 10;
+  if (data.uslovi?.trim()) {
     doc.setFont("helvetica", "bold");
-    doc.text("Terms & Conditions", 20, yPosition);
+    doc.setFontSize(11);
+    doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+    doc.text("USLOVI", margin, yPos);
 
+    yPos += 8;
     doc.setFont("helvetica", "normal");
-    yPosition += 8;
-    const termsLines = doc.splitTextToSize(data.termsAndConditions, 170);
-    doc.text(termsLines, 20, yPosition);
+    doc.setFontSize(10);
+    doc.setTextColor(0, 0, 0);
+
+    const termsLines = doc.splitTextToSize(data.uslovi, pageWidth - margin * 2);
+    doc.text(termsLines, margin, yPos);
   }
+
+  // Footer
+  const footerY = pageHeight - 20;
+  doc.setFontSize(8);
+  doc.setTextColor(grayColor[0], grayColor[1], grayColor[2]);
+  doc.text(
+    `Faktura kreirana: ${new Date().toLocaleDateString("sr-RS")}`,
+    margin,
+    footerY,
+  );
+
+  // Page border
+  doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.setLineWidth(1);
+  doc.rect(5, 5, pageWidth - 10, pageHeight - 10);
 
   // Save the PDF
-  doc.save(`invoice-${data.invoiceNumber}.pdf`);
+  doc.save(`faktura-${data.brojFakture}.pdf`);
+}
+
+function generateQRString(data: InvoiceFormData, total: number): string {
+  // Format total amount for QR code (e.g., "RSD2300,22")
+  const totalString = total.toFixed(2).toString().replace(".", ",");
+  const formattedTotal = `RSD${totalString}`;
+
+  // Clean up company name for QR code - remove/replace problematic characters
+  // Keep Serbian letters, alphanumeric, and convert spaces to hyphens
+  const cleanCompanyName = data.naziv
+    .replace(/[^a-zA-Z0-9ščćđžŠČĆĐŽ -]/g, "") // Remove other special chars
+    .replace(/-+/g, "-") // Replace multiple hyphens with single
+    .replace(/^-|-$/g, "") // Remove leading/trailing hyphens
+    .trim();
+
+  // Clean up tekuci racun - remove any spaces or special formatting
+  const cleanTekuciRacun = data.tekuciRacun.replace(/[^0-9]/g, "");
+
+  // Build QR string according to specification
+  const qrString = `K:PR|V:01|C:1|R:${cleanTekuciRacun}|N:${cleanCompanyName}|I:${formattedTotal}|SF:221`;
+
+  return qrString;
 }
