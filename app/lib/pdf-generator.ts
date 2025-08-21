@@ -76,7 +76,6 @@ export async function generateInvoicePDF(data: InvoiceFormData): Promise<void> {
 
     // Colors
     const primaryColor = [52, 73, 94]; // Darker blue-gray for better readability
-    const accentColor = [41, 128, 185]; // Bright blue for highlights
     const lightGrayColor = [248, 249, 250]; // Very light gray for backgrounds
     const mediumGrayColor = [108, 117, 125]; // Medium gray for secondary text
     const borderColor = [222, 226, 230]; // Light border color
@@ -355,7 +354,7 @@ export async function generateInvoicePDF(data: InvoiceFormData): Promise<void> {
 
     try {
       const qrCodeDataURL = await QRCode.toDataURL(qrString, {
-        width: 200,
+        width: 400,
         margin: 2,
         color: {
           dark: "#000000",
@@ -365,7 +364,7 @@ export async function generateInvoicePDF(data: InvoiceFormData): Promise<void> {
       });
 
       // Position QR code below total section
-      const qrSize = totalBoxWidth - 20;
+      const qrSize = 140;
       const qrX = pageWidth - margin - qrSize;
 
       // QR code background
