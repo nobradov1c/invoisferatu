@@ -10,13 +10,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  CompanyTemplateSelector,
-  ClientTemplateSelector,
-} from "../template-selector";
 import type { InvoiceFormData } from "../../app/lib/invoice-schema";
 import { generateInvoicePDF } from "../../app/lib/pdf-generator";
-import type { CompanyTemplate, ClientTemplate } from "../../app/lib/storage";
+import type { ClientTemplate, CompanyTemplate } from "../../app/lib/storage";
+import {
+  ClientTemplateSelector,
+  CompanyTemplateSelector,
+} from "../template-selector";
 
 export default function InvoiceForm() {
   const [isGenerating, setIsGenerating] = useState(false);
@@ -142,7 +142,7 @@ export default function InvoiceForm() {
 
     setIsGenerating(true);
     try {
-      generateInvoicePDF(data);
+      await generateInvoicePDF(data);
     } catch (error) {
       console.error("Error generating PDF:", error);
       alert("Error generating PDF. Please try again.");

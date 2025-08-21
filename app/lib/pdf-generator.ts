@@ -1,152 +1,294 @@
 import jsPDF from "jspdf";
+import QRCode from "qrcode";
 import type { InvoiceFormData } from "./invoice-schema";
 
-export function generateInvoicePDF(data: InvoiceFormData): void {
+export async function generateInvoicePDF(data: InvoiceFormData): Promise<void> {
   const doc = new jsPDF();
 
-  // Set up fonts and colors
+  // Set default font
   doc.setFont("helvetica");
 
-  // Company Information (Top Left)
-  doc.setFontSize(12);
-  doc.setFont("inter", "bold");
-  doc.text(data.naziv, 20, 30);
+  // Page dimensions
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const margin = 20;
 
-  doc.setFont("inter", "normal");
+  // Colors
+  const primaryColor = [41, 128, 185]; // Blue
+  const grayColor = [128, 128, 128];
+
+  // Header Section
+  doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.rect(0, 0, pageWidth, 35, "F");
+
+  // FAKTURA title
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(24);
+  doc.setFont("helvetica", "bold");
+  doc.text("FAKTURA", margin, 25);
+
+  // Invoice number and date (white text on blue background)
+  doc.setFontSize(12);
+  doc.setFont("helvetica", "normal");
+  doc.text(`# ${data.brojFakture}`, pageWidth - margin - 60, 20);
+  doc.text(`Datum: ${data.datumFakture}`, pageWidth - margin - 60, 30);
+
+  // Reset text color
+  doc.setTextColor(0, 0, 0);
+
+  let yPos = 50;
+
+  // Company Information Section
+  doc.setFontSize(14);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.text("IZDAVALAC FAKTURE", margin, yPos);
+
+  yPos += 8;
   doc.setFontSize(10);
-  const companyAddressLines = data.adresa.split("\n");
-  let yPosition = 40;
-  companyAddressLines.forEach((line) => {
-    doc.text(line, 20, yPosition);
-    yPosition += 5;
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(0, 0, 0);
+  doc.text(data.naziv, margin, yPos);
+
+  yPos += 6;
+  doc.setFont("helvetica", "normal");
+
+  // Split address into lines
+  const addressLines = data.adresa.split("\n");
+  addressLines.forEach((line) => {
+    if (line.trim()) {
+      doc.text(line.trim(), margin, yPos);
+      yPos += 5;
+    }
   });
 
-  // Add PIB, Matični broj, and email
-  doc.text(`PIB: ${data.pib}`, 20, yPosition);
-  yPosition += 5;
-  doc.text(`Matični broj: ${data.maticniBroj}`, 20, yPosition);
-  yPosition += 5;
-  doc.text(`Email: ${data.kontaktEmail}`, 20, yPosition);
-  yPosition += 5;
-  doc.text(`Tekući račun: ${data.tekuciRacun}`, 20, yPosition);
+  doc.text(`PIB: ${data.pib}`, margin, yPos);
+  yPos += 5;
+  doc.text(`Matični broj: ${data.maticniBroj}`, margin, yPos);
+  yPos += 5;
+  doc.text(`Email: ${data.kontaktEmail}`, margin, yPos);
+  yPos += 5;
+  doc.text(`Tekući račun: ${data.tekuciRacun}`, margin, yPos);
 
-  // Invoice Title and Number (Top Right)
-  doc.setFontSize(20);
-  doc.setFont("helvetica", "bold");
-  doc.text("FAKTURA", 150, 30);
-
-  doc.setFontSize(12);
-  doc.text(`# ${data.brojFakture}`, 150, 45);
-
-  doc.setFontSize(10);
-  doc.setFont("helvetica", "normal");
-  doc.text(`Datum fakture: ${data.datumFakture}`, 150, 60);
-
-  // Bill To Section
-  yPosition = 95;
-  doc.setFont("helvetica", "bold");
-  doc.text("Račun za", 20, yPosition);
-
-  doc.setFont("helvetica", "normal");
-  yPosition += 10;
-  doc.text(data.clientNaziv, 20, yPosition);
-
-  const clientAddressLines = data.clientAdresa.split("\n");
-  clientAddressLines.forEach((line) => {
-    yPosition += 5;
-    doc.text(line, 20, yPosition);
-  });
-
-  // Add client PIB and Matični broj
-  yPosition += 5;
-  doc.text(`PIB: ${data.clientPib}`, 20, yPosition);
-  yPosition += 5;
-  doc.text(`Matični broj: ${data.clientMaticniBroj}`, 20, yPosition);
-
-  // Calculate totals
+  // Calculate total for QR and display
   const total = data.items.reduce((sum, item) => sum + item.iznos, 0);
 
-  doc.setFontSize(12);
-  doc.setFont("helvetica", "bold");
-  doc.text("Ukupno", 150, 80);
-  doc.setFontSize(16);
-  doc.text(
-    `${total.toLocaleString("sr-RS", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} RSD`,
-    150,
-    95,
-  );
+  // Generate and add QR Code
+  const qrString = generateQRString(data, total);
+  console.log("Generated QR code string:", qrString);
 
-  // Items Table
-  yPosition = 135;
+  try {
+    const qrCodeDataURL = await QRCode.toDataURL(qrString, {
+      width: 150,
+      margin: 2,
+      color: {
+        dark: "#000000",
+        light: "#FFFFFF",
+      },
+      errorCorrectionLevel: "M",
+    });
 
-  // Table Headers
+    // Add QR Code (top right)
+    const qrSize = 40;
+    const qrX = pageWidth - margin - qrSize;
+    const qrY = 45;
+    doc.addImage(qrCodeDataURL, "PNG", qrX, qrY, qrSize, qrSize);
+
+    // QR Code label
+    doc.setFontSize(8);
+    doc.setTextColor(grayColor[0], grayColor[1], grayColor[2]);
+    doc.text("QR kod za plaćanje", qrX, qrY + qrSize + 5);
+    doc.setTextColor(0, 0, 0);
+  } catch (error) {
+    console.error("Error generating QR code:", error);
+    // Add fallback text if QR code fails
+    doc.setFontSize(8);
+    doc.setTextColor(200, 0, 0);
+    doc.text("QR kod nije dostupan", pageWidth - margin - 60, 65);
+    doc.setTextColor(0, 0, 0);
+  }
+
+  // Client Information Section
+  yPos = Math.max(yPos + 20, 110); // Ensure we don't overlap with QR code
+
+  doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
+  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.text("PRIMA FAKTURE", margin, yPos);
+
+  yPos += 8;
   doc.setFontSize(10);
-  doc.text("#", 20, yPosition);
-  doc.text("Opis", 30, yPosition);
-  doc.text("Iznos (RSD)", 150, yPosition);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(0, 0, 0);
+  doc.text(data.clientNaziv, margin, yPos);
 
-  // Table Header Line
-  doc.line(20, yPosition + 2, 190, yPosition + 2);
-
-  yPosition += 10;
-
-  // Table Items
+  yPos += 6;
   doc.setFont("helvetica", "normal");
-  data.items.forEach((item, index) => {
-    doc.text(`${index + 1}`, 20, yPosition);
 
-    // Handle multi-line descriptions
-    const descriptionLines = doc.splitTextToSize(item.opis, 115);
-    doc.text(descriptionLines, 30, yPosition);
-
-    doc.text(
-      `${item.iznos.toLocaleString("sr-RS", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} RSD`,
-      150,
-      yPosition,
-    );
-
-    yPosition += Math.max(10, descriptionLines.length * 5);
+  // Split client address into lines
+  const clientAddressLines = data.clientAdresa.split("\n");
+  clientAddressLines.forEach((line) => {
+    if (line.trim()) {
+      doc.text(line.trim(), margin, yPos);
+      yPos += 5;
+    }
   });
 
-  // Totals Section
-  yPosition += 10;
-  doc.line(120, yPosition, 190, yPosition);
-  yPosition += 10;
+  doc.text(`PIB: ${data.clientPib}`, margin, yPos);
+  yPos += 5;
+  doc.text(`Matični broj: ${data.clientMaticniBroj}`, margin, yPos);
+
+  // Items table
+  yPos += 20;
+
+  // Table header
+  doc.setFillColor(240, 240, 240);
+  doc.rect(margin, yPos - 5, pageWidth - margin * 2, 15, "F");
 
   doc.setFont("helvetica", "bold");
-  doc.text("Ukupno", 140, yPosition);
+  doc.setFontSize(10);
+  doc.text("#", margin + 3, yPos + 3);
+  doc.text("OPIS", margin + 15, yPos + 3);
+  doc.text("IZNOS (RSD)", pageWidth - margin - 35, yPos + 3);
+
+  // Table header line
+  doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.setLineWidth(0.5);
+  doc.line(margin, yPos + 8, pageWidth - margin, yPos + 8);
+
+  yPos += 18;
+
+  // Table items
+  doc.setFont("helvetica", "normal");
+  doc.setDrawColor(220, 220, 220);
+  doc.setLineWidth(0.2);
+
+  data.items.forEach((item, index) => {
+    const rowHeight = 12;
+
+    // Alternating row colors
+    if (index % 2 === 0) {
+      doc.setFillColor(248, 248, 248);
+      doc.rect(margin, yPos - 3, pageWidth - margin * 2, rowHeight, "F");
+    }
+
+    // Item number
+    doc.text(`${index + 1}`, margin + 3, yPos + 4);
+
+    // Item description (with text wrapping)
+    const descriptionLines = doc.splitTextToSize(item.opis, 120);
+    doc.text(descriptionLines, margin + 15, yPos + 4);
+
+    // Item amount (right aligned)
+    const amountText = `${item.iznos.toLocaleString("sr-RS", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })} RSD`;
+    const amountWidth = doc.getTextWidth(amountText);
+    doc.text(amountText, pageWidth - margin - amountWidth - 3, yPos + 4);
+
+    yPos += Math.max(rowHeight, descriptionLines.length * 5 + 6);
+
+    // Row separator
+    doc.line(margin, yPos - 6, pageWidth - margin, yPos - 6);
+  });
+
+  // Total section
+  yPos += 10;
+
+  // Total background
+  doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.rect(pageWidth - margin - 80, yPos - 5, 80, 20, "F");
+
+  // Total text
+  doc.setTextColor(255, 255, 255);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.text("UKUPNO:", pageWidth - margin - 75, yPos + 3);
+
+  const totalText = `${total.toLocaleString("sr-RS", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })} RSD`;
+  const totalWidth = doc.getTextWidth(totalText);
+  doc.text(totalText, pageWidth - margin - totalWidth - 5, yPos + 10);
+
+  // Reset text color
+  doc.setTextColor(0, 0, 0);
+  yPos += 35;
+
+  // Additional information sections
+  if (data.napomene?.trim()) {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+    doc.text("NAPOMENE", margin, yPos);
+
+    yPos += 8;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor(0, 0, 0);
+
+    const notesLines = doc.splitTextToSize(
+      data.napomene,
+      pageWidth - margin * 2,
+    );
+    doc.text(notesLines, margin, yPos);
+    yPos += notesLines.length * 5 + 10;
+  }
+
+  if (data.uslovi?.trim()) {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+    doc.text("USLOVI", margin, yPos);
+
+    yPos += 8;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor(0, 0, 0);
+
+    const termsLines = doc.splitTextToSize(data.uslovi, pageWidth - margin * 2);
+    doc.text(termsLines, margin, yPos);
+  }
+
+  // Footer
+  const footerY = pageHeight - 20;
+  doc.setFontSize(8);
+  doc.setTextColor(grayColor[0], grayColor[1], grayColor[2]);
   doc.text(
-    `${total.toLocaleString("sr-RS", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} RSD`,
-    170,
-    yPosition,
+    `Faktura kreirana: ${new Date().toLocaleDateString("sr-RS")}`,
+    margin,
+    footerY,
   );
 
-  // Napomene Section
-  if (data.napomene) {
-    yPosition += 20;
-    doc.setFont("helvetica", "bold");
-    doc.text("Napomene", 20, yPosition);
-
-    doc.setFont("helvetica", "normal");
-    yPosition += 8;
-    const notesLines = doc.splitTextToSize(data.napomene, 170);
-    doc.text(notesLines, 20, yPosition);
-    yPosition += notesLines.length * 5;
-  }
-
-  // Uslovi
-  if (data.uslovi) {
-    yPosition += 10;
-    doc.setFont("helvetica", "bold");
-    doc.text("Uslovi", 20, yPosition);
-
-    doc.setFont("helvetica", "normal");
-    yPosition += 8;
-    const termsLines = doc.splitTextToSize(data.uslovi, 170);
-    doc.text(termsLines, 20, yPosition);
-  }
+  // Page border
+  doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.setLineWidth(1);
+  doc.rect(5, 5, pageWidth - 10, pageHeight - 10);
 
   // Save the PDF
   doc.save(`faktura-${data.brojFakture}.pdf`);
+}
+
+function generateQRString(data: InvoiceFormData, total: number): string {
+  // Format total amount for QR code (e.g., "RSD2300,22")
+  const totalString = total.toFixed(2).toString().replace(".", ",");
+  const formattedTotal = `RSD${totalString}`;
+
+  // Clean up company name for QR code - remove/replace problematic characters
+  // Keep Serbian letters, alphanumeric, and convert spaces to hyphens
+  const cleanCompanyName = data.naziv
+    .replace(/[^a-zA-Z0-9ščćđžŠČĆĐŽ -]/g, "") // Remove other special chars
+    .replace(/-+/g, "-") // Replace multiple hyphens with single
+    .replace(/^-|-$/g, "") // Remove leading/trailing hyphens
+    .trim();
+
+  // Clean up tekuci racun - remove any spaces or special formatting
+  const cleanTekuciRacun = data.tekuciRacun.replace(/[^0-9]/g, "");
+
+  // Build QR string according to specification
+  const qrString = `K:PR|V:01|C:1|R:${cleanTekuciRacun}|N:${cleanCompanyName}|I:${formattedTotal}|SF:221`;
+
+  return qrString;
 }

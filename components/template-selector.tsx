@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { Check, ChevronDown, Plus, Save, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -27,14 +27,14 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import type { CompanyTemplate, ClientTemplate } from "../app/lib/storage";
+import type { ClientTemplate, CompanyTemplate } from "../app/lib/storage";
 import {
-  getCompanyTemplates,
-  getClientTemplates,
-  saveCompanyTemplate,
-  saveClientTemplate,
-  deleteCompanyTemplate,
   deleteClientTemplate,
+  deleteCompanyTemplate,
+  getClientTemplates,
+  getCompanyTemplates,
+  saveClientTemplate,
+  saveCompanyTemplate,
 } from "../app/lib/storage";
 
 interface TemplateData {
