@@ -91,7 +91,7 @@ export async function generateInvoicePDF(data: InvoiceFormData): Promise<void> {
     // FAKTURA title - better positioned and sized
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(28);
-    doc.setFont(family, "bold", 700);
+    // doc.setFont(family, "bold", 700);
     doc.text("FAKTURA", margin, 38);
 
     // Invoice details in header - better aligned
@@ -245,7 +245,7 @@ export async function generateInvoicePDF(data: InvoiceFormData): Promise<void> {
     // Table headers with better typography
     doc.setFontSize(11);
     doc.setTextColor(255, 255, 255);
-    doc.setFont(family, "bold", 700);
+    // doc.setFont(family, "bold", 700);
 
     const colPositions = {
       number: margin + 10,
@@ -286,7 +286,7 @@ export async function generateInvoicePDF(data: InvoiceFormData): Promise<void> {
       }
 
       // Item number
-      doc.setFont(family, "bold", 700);
+      // doc.setFont(family, "bold", 700);
       doc.text(`${index + 1}`, colPositions.number, yPos + 10);
       doc.setFont(family, "normal", 400);
 
@@ -327,7 +327,7 @@ export async function generateInvoicePDF(data: InvoiceFormData): Promise<void> {
     // Total text
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(14);
-    doc.setFont(family, "bold", 700);
+    // doc.setFont(family, "bold", 700);
     doc.text("UKUPNO:", totalBoxX + 15, yPos + 15);
 
     const totalText = `${total.toLocaleString("sr-RS", {
@@ -417,7 +417,7 @@ export async function generateInvoicePDF(data: InvoiceFormData): Promise<void> {
 
       doc.setFontSize(11);
       doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-      doc.setFont(family, "bold", 700);
+      // doc.setFont(family, "bold", 700);
       doc.text("NAPOMENE", margin + 8, yPos + 5);
 
       yPos += 25;
@@ -440,7 +440,7 @@ export async function generateInvoicePDF(data: InvoiceFormData): Promise<void> {
 
       doc.setFontSize(11);
       doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-      doc.setFont(family, "bold", 700);
+      // doc.setFont(family, "bold", 700);
       doc.text("USLOVI", margin + 8, yPos + 5);
 
       yPos += 25;
