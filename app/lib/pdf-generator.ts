@@ -128,12 +128,22 @@ export async function generateInvoicePDF(data: InvoiceFormData): Promise<void> {
     doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
     doc.text("IZDAVALAC FAKTURE", margin + 8, yPos + 5);
 
-    yPos += sectionSpacing;
+    yPos += sectionSpacing + 12;
 
-    // Company name - larger and more prominent
+    // Company name - larger and more prominent, split after 5th word if needed
     doc.setFontSize(14);
     doc.setTextColor(0, 0, 0);
-    doc.text(data.naziv, margin + 8, yPos);
+
+    const nazivWords = data.naziv.split(" ");
+    if (nazivWords.length > 5) {
+      const firstLine = nazivWords.slice(0, 5).join(" ");
+      const secondLine = nazivWords.slice(5).join(" ");
+      doc.text(firstLine, margin + 8, yPos);
+      yPos += lineHeight;
+      doc.text(secondLine, margin + 8, yPos);
+    } else {
+      doc.text(data.naziv, margin + 8, yPos);
+    }
 
     yPos += lineHeight + 4;
 
@@ -172,50 +182,7 @@ export async function generateInvoicePDF(data: InvoiceFormData): Promise<void> {
     const total = data.items.reduce((sum, item) => sum + item.iznos, 0);
     const qrString = generateQRString(data, total);
 
-    try {
-      const qrCodeDataURL = await QRCode.toDataURL(qrString, {
-        width: 200,
-        margin: 2,
-        color: {
-          dark: "#000000",
-          light: "#FFFFFF",
-        },
-        errorCorrectionLevel: "M",
-      });
-
-      // Position QR code better
-      const qrSize = 80;
-      const qrX = pageWidth - margin - qrSize;
-      const qrY = 90; // Align with company info section
-
-      // QR code background
-      doc.setFillColor(255, 255, 255);
-      doc.rect(qrX - 5, qrY - 5, qrSize + 10, qrSize + 20, "F");
-      doc.setDrawColor(borderColor[0], borderColor[1], borderColor[2]);
-      doc.setLineWidth(0.5);
-      doc.rect(qrX - 5, qrY - 5, qrSize + 10, qrSize + 20);
-
-      doc.addImage(qrCodeDataURL, "PNG", qrX, qrY, qrSize, qrSize);
-
-      // QR Code label - better positioned
-      doc.setFontSize(8);
-      doc.setTextColor(
-        mediumGrayColor[0],
-        mediumGrayColor[1],
-        mediumGrayColor[2],
-      );
-      const qrLabel = "QR kod za plaćanje";
-      const qrLabelWidth = doc.getTextWidth(qrLabel);
-      doc.text(qrLabel, qrX + (qrSize - qrLabelWidth) / 2, qrY + qrSize + 12);
-      doc.setTextColor(0, 0, 0);
-    } catch (error) {
-      console.error("Error generating QR code:", error);
-      // Fallback if QR code fails
-      doc.setFontSize(9);
-      doc.setTextColor(200, 100, 100);
-      doc.text("QR kod nije dostupan", pageWidth - margin - 90, 130);
-      doc.setTextColor(0, 0, 0);
-    }
+    // QR code will be generated later, after the total section
 
     // ===================
     // CLIENT INFORMATION SECTION
@@ -231,7 +198,7 @@ export async function generateInvoicePDF(data: InvoiceFormData): Promise<void> {
     doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
     doc.text("RAČUN ZA", margin + 8, yPos + 5);
 
-    yPos += sectionSpacing;
+    yPos += sectionSpacing + 12;
 
     // Client name - larger and more prominent
     doc.setFontSize(14);
@@ -271,7 +238,7 @@ export async function generateInvoicePDF(data: InvoiceFormData): Promise<void> {
 
     yPos += sectionSpacing + 10;
 
-    // Table header background
+    // Table header background - using same color as main header
     doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
     const tableHeaderHeight = 25;
     doc.rect(margin, yPos - 8, pageWidth - margin * 2, tableHeaderHeight, "F");
@@ -349,20 +316,20 @@ export async function generateInvoicePDF(data: InvoiceFormData): Promise<void> {
 
     yPos += 15;
 
-    // Total section with improved styling
-    const totalBoxWidth = 150;
-    const totalBoxHeight = 35;
+    // Total section with improved styling - using same color as header
+    const totalBoxWidth = 180;
+    const totalBoxHeight = 60;
     const totalBoxX = pageWidth - margin - totalBoxWidth;
 
-    // Total background
-    doc.setFillColor(accentColor[0], accentColor[1], accentColor[2]);
+    // Total background - using primary color to match header
+    doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
     doc.rect(totalBoxX, yPos - 5, totalBoxWidth, totalBoxHeight, "F");
 
     // Total text
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(14);
     doc.setFont(family, "bold", 700);
-    doc.text("UKUPNO:", totalBoxX + 10, yPos + 10);
+    doc.text("UKUPNO:", totalBoxX + 15, yPos + 15);
 
     const totalText = `${total.toLocaleString("sr-RS", {
       minimumFractionDigits: 2,
@@ -373,14 +340,72 @@ export async function generateInvoicePDF(data: InvoiceFormData): Promise<void> {
     const totalTextWidth = doc.getTextWidth(totalText);
     doc.text(
       totalText,
-      totalBoxX + totalBoxWidth - totalTextWidth - 10,
-      yPos + 25,
+      totalBoxX + totalBoxWidth - totalTextWidth - 15,
+      yPos + totalBoxHeight - 15,
     );
 
     // Reset text formatting
     doc.setTextColor(0, 0, 0);
     doc.setFont(family, "normal", 400);
-    yPos += totalBoxHeight + sectionSpacing;
+    yPos += totalBoxHeight + 20;
+
+    // ===================
+    // QR CODE SECTION (moved here)
+    // ===================
+
+    try {
+      const qrCodeDataURL = await QRCode.toDataURL(qrString, {
+        width: 200,
+        margin: 2,
+        color: {
+          dark: "#000000",
+          light: "#FFFFFF",
+        },
+        errorCorrectionLevel: "M",
+      });
+
+      // Position QR code below total section
+      const qrSize = totalBoxWidth - 20;
+      const qrX = pageWidth - margin - qrSize;
+
+      // QR code background
+      doc.setFillColor(255, 255, 255);
+      doc.rect(qrX, yPos, qrSize, qrSize, "F");
+      doc.setDrawColor(borderColor[0], borderColor[1], borderColor[2]);
+      doc.setLineWidth(0.5);
+      doc.rect(qrX, yPos, qrSize, qrSize);
+
+      doc.addImage(
+        qrCodeDataURL,
+        "PNG",
+        qrX + 5,
+        yPos + 5,
+        qrSize - 10,
+        qrSize - 10,
+      );
+
+      // QR Code label
+      doc.setFontSize(8);
+      doc.setTextColor(
+        mediumGrayColor[0],
+        mediumGrayColor[1],
+        mediumGrayColor[2],
+      );
+      const qrLabel = "NBS IPS";
+      const qrLabelWidth = doc.getTextWidth(qrLabel);
+      doc.text(qrLabel, qrX + (qrSize - qrLabelWidth) / 2, yPos + qrSize + 12);
+      doc.setTextColor(0, 0, 0);
+
+      yPos += qrSize + 30;
+    } catch (error) {
+      console.error("Error generating QR code:", error);
+      // Fallback if QR code fails
+      doc.setFontSize(9);
+      doc.setTextColor(200, 100, 100);
+      doc.text("QR kod nije dostupan", pageWidth - margin - 90, yPos);
+      doc.setTextColor(0, 0, 0);
+      yPos += 20;
+    }
 
     // ===================
     // ADDITIONAL INFORMATION
