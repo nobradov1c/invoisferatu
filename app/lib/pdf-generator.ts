@@ -53,7 +53,7 @@ function generateQRString(data: InvoiceFormData, total: number): string {
   const cleanTekuciRacun = data.tekuciRacun.replace(/[^0-9]/g, "");
 
   // Build QR string according to specification
-  const qrString = `K:PR|V:01|C:1|R:${cleanTekuciRacun}|N:${cleanCompanyName}|I:${formattedTotal}|SF:221`;
+  const qrString = `K:PR|V:01|C:1|R:${cleanTekuciRacun}|N:${cleanCompanyName}|I:${formattedTotal}|SF:${data.sifraPlacanja}`;
 
   return qrString;
 }
