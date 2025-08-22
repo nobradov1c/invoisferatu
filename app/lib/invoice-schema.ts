@@ -33,6 +33,7 @@ export const invoiceSchema = z.object({
   // Dodatne informacije
   napomene: z.string().optional(),
   uslovi: z.string().optional(),
+  sifraPlacanja: z.string().min(1, "Šifra plaćanja je obavezna").default("221"),
 });
 
 export type InvoiceFormData = z.infer<typeof invoiceSchema>;

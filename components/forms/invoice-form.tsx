@@ -42,7 +42,7 @@ export default function InvoiceForm() {
       maticniBroj: "",
       kontaktEmail: "",
       tekuciRacun: "",
-      brojFakture: new Date().toISOString().split("T")[0].replace(/-/g, ""),
+      brojFakture: `${new Date().toISOString().split("T")[0].replace(/-/g, "")}00`,
       datumFakture: new Date().toISOString().split("T")[0],
       clientNaziv: "",
       clientAdresa: "",
@@ -51,6 +51,7 @@ export default function InvoiceForm() {
       items: [{ opis: "", iznos: 0 }],
       napomene: "",
       uslovi: "",
+      sifraPlacanja: "221",
     },
   });
 
@@ -532,6 +533,22 @@ export default function InvoiceForm() {
                 rows={3}
                 {...register("uslovi")}
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="sifraPlatnogForgona">
+                Šifra platnog forgona (SF)
+              </Label>
+              <Input
+                id="sifraPlatnogForgona"
+                placeholder="221"
+                {...register("sifraPlacanja")}
+              />
+              {errors.sifraPlacanja && (
+                <span className="text-red-500 text-sm">
+                  {errors.sifraPlacanja.message}
+                </span>
+              )}
             </div>
           </CardContent>
         </Card>
