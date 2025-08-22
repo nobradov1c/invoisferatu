@@ -42,7 +42,7 @@ export default function InvoiceForm() {
       maticniBroj: "",
       kontaktEmail: "",
       tekuciRacun: "",
-      brojFakture: new Date().toISOString().split("T")[0].replace(/-/g, ""),
+      brojFakture: `${new Date().toISOString().split("T")[0].replace(/-/g, "")}00`,
       datumFakture: new Date().toISOString().split("T")[0],
       clientNaziv: "",
       clientAdresa: "",
