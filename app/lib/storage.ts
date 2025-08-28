@@ -182,3 +182,185 @@ export function updateClientTemplate(
     throw new Error("Greška pri ažuriranju šablona klijenta");
   }
 }
+
+// Export/Import functionality
+export interface TemplateExportData {
+  companyTemplates: CompanyTemplate[];
+  clientTemplates: ClientTemplate[];
+  exportedAt: Date;
+  version: string;
+}
+
+export function exportTemplatesToFile(): void {
+  const companyTemplates = getCompanyTemplates();
+  const clientTemplates = getClientTemplates();
+
+  const exportData: TemplateExportData = {
+    companyTemplates,
+    clientTemplates,
+    exportedAt: new Date(),
+    version: "1.0",
+  };
+
+  const dataStr = JSON.stringify(exportData, null, 2);
+  const dataUri = `data:application/json;charset=utf-8,${encodeURIComponent(dataStr)}`;
+
+  const exportFileDefaultName = `invoice-templates-${new Date().toISOString().split("T")[0]}.json`;
+
+  const linkElement = document.createElement("a");
+  linkElement.setAttribute("href", dataUri);
+  linkElement.setAttribute("download", exportFileDefaultName);
+  linkElement.click();
+}
+
+export function importTemplatesFromFile(file: File): Promise<{
+  success: boolean;
+  message: string;
+  importedCompanyCount?: number;
+  importedClientCount?: number;
+}> {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+
+    reader.onload = (event) => {
+      try {
+        const content = event.target?.result as string;
+        const importData = JSON.parse(content) as TemplateExportData;
+
+        // Validate the imported data structure
+        if (!importData.companyTemplates || !importData.clientTemplates) {
+          resolve({
+            success: false,
+            message:
+              "Neispravna struktura fajla. Molimo koristite validni export fajl.",
+          });
+          return;
+        }
+
+        // Validate company templates structure
+        const validCompanyTemplates = importData.companyTemplates.filter(
+          (template) =>
+            template.id &&
+            template.name &&
+            template.naziv &&
+            template.adresa &&
+            template.pib &&
+            template.maticniBroj &&
+            template.kontaktEmail &&
+            template.tekuciRacun,
+        );
+
+        // Validate client templates structure
+        const validClientTemplates = importData.clientTemplates.filter(
+          (template) =>
+            template.id &&
+            template.name &&
+            template.clientNaziv &&
+            template.clientAdresa &&
+            template.clientPib &&
+            template.clientMaticniBroj,
+        );
+
+        // Get existing templates
+        const existingCompanyTemplates = getCompanyTemplates();
+        const existingClientTemplates = getClientTemplates();
+
+        // Merge templates, avoiding duplicates by name
+        const mergedCompanyTemplates = [...existingCompanyTemplates];
+        const mergedClientTemplates = [...existingClientTemplates];
+
+        let importedCompanyCount = 0;
+        let importedClientCount = 0;
+
+        // Add company templates that don't already exist
+        validCompanyTemplates.forEach((importTemplate) => {
+          const exists = existingCompanyTemplates.some(
+            (existing) =>
+              existing.name === importTemplate.name ||
+              existing.id === importTemplate.id,
+          );
+
+          if (!exists) {
+            const newTemplate: CompanyTemplate = {
+              ...importTemplate,
+              id: crypto.randomUUID(), // Generate new ID to avoid conflicts
+              createdAt: new Date(importTemplate.createdAt),
+            };
+            mergedCompanyTemplates.push(newTemplate);
+            importedCompanyCount++;
+          }
+        });
+
+        // Add client templates that don't already exist
+        validClientTemplates.forEach((importTemplate) => {
+          const exists = existingClientTemplates.some(
+            (existing) =>
+              existing.name === importTemplate.name ||
+              existing.id === importTemplate.id,
+          );
+
+          if (!exists) {
+            const newTemplate: ClientTemplate = {
+              ...importTemplate,
+              id: crypto.randomUUID(), // Generate new ID to avoid conflicts
+              createdAt: new Date(importTemplate.createdAt),
+            };
+            mergedClientTemplates.push(newTemplate);
+            importedClientCount++;
+          }
+        });
+
+        // Save merged templates
+        try {
+          localStorage.setItem(
+            COMPANY_TEMPLATES_KEY,
+            JSON.stringify(mergedCompanyTemplates),
+          );
+          localStorage.setItem(
+            CLIENT_TEMPLATES_KEY,
+            JSON.stringify(mergedClientTemplates),
+          );
+
+          resolve({
+            success: true,
+            message: `Uspešno uvezeno ${importedCompanyCount} šablona kompanija i ${importedClientCount} šablona klijenata.`,
+            importedCompanyCount,
+            importedClientCount,
+          });
+        } catch (error) {
+          console.error("Error saving imported templates:", error);
+          resolve({
+            success: false,
+            message: "Greška pri čuvanju uvezenih šablona.",
+          });
+        }
+      } catch (error) {
+        console.error("Error parsing import file:", error);
+        resolve({
+          success: false,
+          message:
+            "Greška pri čitanju fajla. Molimo proverite da li je fajl ispravan JSON format.",
+        });
+      }
+    };
+
+    reader.onerror = () => {
+      resolve({
+        success: false,
+        message: "Greška pri čitanju fajla.",
+      });
+    };
+
+    reader.readAsText(file);
+  });
+}
+
+export function clearAllTemplates(): void {
+  try {
+    localStorage.removeItem(COMPANY_TEMPLATES_KEY);
+    localStorage.removeItem(CLIENT_TEMPLATES_KEY);
+  } catch (error) {
+    console.error("Error clearing templates:", error);
+    throw new Error("Greška pri brisanju svih šablona");
+  }
+}

@@ -258,36 +258,6 @@ export function CompanyTemplateSelector({
           </DialogContent>
         </Dialog>
       </div>
-
-      {/* Template Management */}
-      {templates.length > 0 && (
-        <div className="space-y-1">
-          <Label className="text-muted-foreground text-xs">
-            Upravljanje šablonima:
-          </Label>
-          <div className="flex flex-wrap gap-1">
-            {templates.map((template) => (
-              <div
-                key={template.id}
-                className="flex items-center gap-1 rounded bg-muted px-2 py-1 text-xs"
-              >
-                <span>{template.name}</span>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-4 w-4"
-                  onClick={() =>
-                    handleDeleteTemplate(template.id, {} as React.MouseEvent)
-                  }
-                  title="Obriši šablon"
-                >
-                  <Trash2 className="h-3 w-3" />
-                </Button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
@@ -480,36 +450,6 @@ export function ClientTemplateSelector({
           </DialogContent>
         </Dialog>
       </div>
-
-      {/* Template Management */}
-      {templates.length > 0 && (
-        <div className="space-y-1">
-          <Label className="text-muted-foreground text-xs">
-            Upravljanje šablonima:
-          </Label>
-          <div className="flex flex-wrap gap-1">
-            {templates.map((template) => (
-              <div
-                key={template.id}
-                className="flex items-center gap-1 rounded bg-muted px-2 py-1 text-xs"
-              >
-                <span>{template.name}</span>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-4 w-4"
-                  onClick={() =>
-                    handleDeleteTemplate(template.id, {} as React.MouseEvent)
-                  }
-                  title="Obriši šablon"
-                >
-                  <Trash2 className="h-3 w-3" />
-                </Button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
