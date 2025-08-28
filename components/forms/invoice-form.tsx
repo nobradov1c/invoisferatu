@@ -515,7 +515,7 @@ export default function InvoiceForm() {
             <CardTitle>Dodatne informacije</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
+            {/*<div className="space-y-2">
               <Label htmlFor="napomene">Napomene</Label>
               <Textarea
                 id="napomene"
@@ -523,9 +523,9 @@ export default function InvoiceForm() {
                 rows={3}
                 {...register("napomene")}
               />
-            </div>
+            </div>*/}
 
-            <div className="space-y-2">
+            {/*<div className="space-y-2">
               <Label htmlFor="uslovi">Uslovi</Label>
               <Textarea
                 id="uslovi"
@@ -533,14 +533,12 @@ export default function InvoiceForm() {
                 rows={3}
                 {...register("uslovi")}
               />
-            </div>
+            </div>*/}
 
             <div className="space-y-2">
-              <Label htmlFor="sifraPlatnogForgona">
-                Šifra platnog forgona (SF)
-              </Label>
+              <Label htmlFor="sifraPlacanja">Šifra plaćanja (SF)</Label>
               <Input
-                id="sifraPlatnogForgona"
+                id="sifraPlacanja"
                 placeholder="221"
                 {...register("sifraPlacanja")}
               />
