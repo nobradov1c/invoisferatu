@@ -55,64 +55,69 @@ export function Header() {
           </div>
         </Link>
 
-        {/* Desktop Navigation */}
-        <nav className="hidden items-center gap-1 md:flex">
-          {navigationItems.map((item) => (
-            <Button
-              key={item.href}
-              asChild
-              variant={item.isActive ? "default" : "ghost"}
-              size="sm"
-            >
-              <Link href={item.href} className="flex items-center gap-2">
-                {item.icon && <item.icon className="h-4 w-4" />}
-                {item.label}
-              </Link>
-            </Button>
-          ))}
-        </nav>
-
-        {/* Right side - Theme toggle and mobile menu */}
+        {/* Right side - Navigation, mobile menu and Theme toggle */}
         <div className="flex items-center gap-2">
-          <ThemeToggle />
-
-          {/* Mobile Navigation */}
-          <Sheet open={isOpen} onOpenChange={setIsOpen}>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="sm" className="md:hidden">
-                <Menu className="h-5 w-5" />
-                <span className="sr-only">Toggle navigation menu</span>
+          {/* Desktop Navigation */}
+          <nav className="hidden items-center gap-2 md:flex">
+            {navigationItems.map((item) => (
+              <Button
+                key={item.href}
+                asChild
+                variant={item.isActive ? "default" : "ghost"}
+                size="sm"
+              >
+                <Link href={item.href} className="flex items-center gap-2">
+                  {item.icon && <item.icon className="h-4 w-4" />}
+                  {item.label}
+                </Link>
               </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="w-[300px] sm:w-[350px]">
-              <SheetHeader>
-                <SheetTitle className="flex items-center gap-2 text-left">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
-                    <FileText className="h-5 w-5" />
-                  </div>
-                  Invoisferatu
-                </SheetTitle>
-              </SheetHeader>
+            ))}
+          </nav>
 
-              <nav className="mt-8 flex flex-col gap-3">
-                {navigationItems.map((item) => (
-                  <Button
-                    key={item.href}
-                    asChild
-                    variant={item.isActive ? "default" : "ghost"}
-                    size="lg"
-                    className="justify-start"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    <Link href={item.href} className="flex items-center gap-3">
-                      {item.icon && <item.icon className="h-5 w-5" />}
-                      {item.label}
-                    </Link>
-                  </Button>
-                ))}
-              </nav>
-            </SheetContent>
-          </Sheet>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+
+            {/* Mobile Navigation */}
+            <Sheet open={isOpen} onOpenChange={setIsOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="sm" className="md:hidden">
+                  <Menu className="h-5 w-5" />
+                  <span className="sr-only">Toggle navigation menu</span>
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-[300px] sm:w-[350px]">
+                <SheetHeader>
+                  <SheetTitle className="flex items-center gap-2 text-left">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
+                      <FileText className="h-5 w-5" />
+                    </div>
+                    Invoisferatu
+                  </SheetTitle>
+                </SheetHeader>
+
+                <nav className="mt-8 flex flex-col gap-3">
+                  {navigationItems.map((item) => (
+                    <Button
+                      key={item.href}
+                      asChild
+                      variant={item.isActive ? "default" : "ghost"}
+                      size="lg"
+                      className="justify-start"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      <Link
+                        href={item.href}
+                        className="flex items-center gap-3"
+                      >
+                        {item.icon && <item.icon className="h-5 w-5" />}
+                        {item.label}
+                      </Link>
+                    </Button>
+                  ))}
+                </nav>
+              </SheetContent>
+            </Sheet>
+          </div>
         </div>
       </div>
     </header>
