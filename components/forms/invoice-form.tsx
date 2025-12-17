@@ -49,8 +49,7 @@ export default function InvoiceForm() {
       clientPib: "",
       clientMaticniBroj: "",
       items: [{ opis: "", iznos: 0 }],
-      napomene: "",
-      uslovi: "",
+      bottomNote: "",
       sifraPlacanja: "221",
     },
   });
@@ -515,25 +514,15 @@ export default function InvoiceForm() {
             <CardTitle>Dodatne informacije</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/*<div className="space-y-2">
-              <Label htmlFor="napomene">Napomene</Label>
+            <div className="space-y-2">
+              <Label htmlFor="bottomNote">Napomena na dnu fakture</Label>
               <Textarea
-                id="napomene"
-                placeholder="Hvala vam na poslovanju!"
-                rows={3}
-                {...register("napomene")}
+                id="bottomNote"
+                placeholder="Napomena"
+                rows={2}
+                {...register("bottomNote")}
               />
-            </div>*/}
-
-            {/*<div className="space-y-2">
-              <Label htmlFor="uslovi">Uslovi</Label>
-              <Textarea
-                id="uslovi"
-                placeholder="Svi pruženi servisi podležu uslovima navedenim u ugovoru ili sporazumu."
-                rows={3}
-                {...register("uslovi")}
-              />
-            </div>*/}
+            </div>
 
             <div className="space-y-2">
               <Label htmlFor="sifraPlacanja">Šifra plaćanja (SF)</Label>

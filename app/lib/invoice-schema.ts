@@ -31,8 +31,7 @@ export const invoiceSchema = z.object({
   items: z.array(invoiceItemSchema).min(1, "Najmanje jedna stavka je potrebna"),
 
   // Dodatne informacije
-  napomene: z.string().optional(),
-  uslovi: z.string().optional(),
+  bottomNote: z.string().optional(),
   sifraPlacanja: z.string().min(1, "Šifra plaćanja je obavezna").default("221"),
 });
 
