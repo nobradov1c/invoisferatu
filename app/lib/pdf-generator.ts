@@ -410,49 +410,29 @@ export async function generateInvoicePDF(data: InvoiceFormData): Promise<void> {
     // ADDITIONAL INFORMATION
     // ===================
 
-    // Notes section
-    if (data.napomene?.trim()) {
+    // Bottom Note section
+    if (data.bottomNote?.trim()) {
+      // Add some extra space before bottom note
+      yPos += 10;
+
       doc.setFillColor(lightGrayColor[0], lightGrayColor[1], lightGrayColor[2]);
       doc.rect(margin, yPos - 8, pageWidth - margin * 2, 18, "F");
 
       doc.setFontSize(11);
       doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-      // doc.setFont(family, "bold", 700);
-      doc.text("NAPOMENE", margin + 8, yPos + 5);
+      doc.text("NAPOMENA", margin + 8, yPos + 5);
 
       yPos += 25;
       doc.setFontSize(10);
       doc.setTextColor(0, 0, 0);
       doc.setFont(family, "normal", 400);
 
-      const notesLines = doc.splitTextToSize(
-        data.napomene,
+      const bottomNoteLines = doc.splitTextToSize(
+        data.bottomNote,
         pageWidth - margin * 2 - 16,
       );
-      doc.text(notesLines, margin + 8, yPos);
-      yPos += notesLines.length * 12 + sectionSpacing;
-    }
-
-    // Terms section
-    if (data.uslovi?.trim()) {
-      doc.setFillColor(lightGrayColor[0], lightGrayColor[1], lightGrayColor[2]);
-      doc.rect(margin, yPos - 8, pageWidth - margin * 2, 18, "F");
-
-      doc.setFontSize(11);
-      doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-      // doc.setFont(family, "bold", 700);
-      doc.text("USLOVI", margin + 8, yPos + 5);
-
-      yPos += 25;
-      doc.setFontSize(10);
-      doc.setTextColor(0, 0, 0);
-      doc.setFont(family, "normal", 400);
-
-      const termsLines = doc.splitTextToSize(
-        data.uslovi,
-        pageWidth - margin * 2 - 16,
-      );
-      doc.text(termsLines, margin + 8, yPos);
+      doc.text(bottomNoteLines, margin + 8, yPos);
+      yPos += bottomNoteLines.length * 12 + sectionSpacing;
     }
 
     // ===================
