@@ -49,7 +49,8 @@ export default function InvoiceForm() {
       clientPib: "",
       clientMaticniBroj: "",
       items: [{ opis: "", iznos: 0 }],
-      bottomNote: "",
+      bottomNote: `Faktura je važeća bez pečata i potpisa.
+Izdavalac fakture nije u sistemu PDV-a.`,
       sifraPlacanja: "221",
     },
   });
